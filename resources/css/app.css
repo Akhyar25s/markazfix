@@ -1,0 +1,129 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@theme {
+    --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+    
+    --animate-float: float 6s ease-in-out infinite;
+    --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    --animate-blob: blob 7s infinite;
+}
+
+@layer base {
+  :root {
+    /* Premium Modern Green & Gold Palette */
+    --background: #f4fcf4; 
+    --foreground: #062f1e; 
+    
+    --card: rgba(255, 255, 255, 0.6); /* Glassmorphism base */
+    --card-foreground: #062f1e;
+    
+    --popover: rgba(255, 255, 255, 0.9);
+    --popover-foreground: #062f1e;
+    
+    --border: rgba(22, 163, 74, 0.2); 
+    --input: rgba(22, 163, 74, 0.2);
+    --ring: rgba(217, 119, 6, 0.5); /* Gold ring */
+    
+    --primary: #16a34a; 
+    --primary-foreground: #ffffff;
+    
+    --secondary: #d97706; /* Premium Gold */
+    --secondary-foreground: #ffffff;
+    
+    --muted: rgba(22, 163, 74, 0.1);
+    --muted-foreground: #4b5563;
+    
+    --accent: #14532d; 
+    --accent-foreground: #ffffff;
+    
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(22, 163, 74, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(217, 119, 6, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(20, 83, 45, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(217, 119, 6, 0.1) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_0_rgba(22,163,74,0.05)];
+  }
+  .glass-dark {
+    @apply bg-accent/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)];
+  }
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-lg border border-white/50 shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-300;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent via-primary to-secondary;
+  }
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary to-yellow-400;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes blob {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
