@@ -484,51 +484,46 @@
             popupAnchor: [0, -40]
         });
 
-        // Dummy data for Mahallah (This will be replaced by database query)
-        var mahallahData = [
-            { name: "Masjid Raya Bandung", wilayah: "Bandung Raya", lat: -6.9218, lng: 107.6061, members: 150, status: 'Aktif' },
-            { name: "Islamic Center Jakarta", wilayah: "Jakarta Selatan", lat: -6.2088, lng: 106.8456, members: 320, status: 'Aktif' },
-            { name: "Masjid Al-Falah Surabaya", wilayah: "Surabaya Timur", lat: -7.2847, lng: 112.7441, members: 210, status: 'Aktif' },
-            { name: "Masjid Agung Medan", wilayah: "Medan Utara", lat: 3.5852, lng: 98.6756, members: 180, status: 'Aktif' },
-            { name: "Masjid Baiturrahman", wilayah: "Aceh", lat: 5.5536, lng: 95.3173, members: 400, status: 'Aktif' },
-            { name: "Masjid Istiqlal", wilayah: "Jakarta Pusat", lat: -6.1702, lng: 106.8310, members: 1200, status: 'Aktif' },
-            { name: "Masjid Jogokariyan", wilayah: "Yogyakarta", lat: -7.8236, lng: 110.3644, members: 500, status: 'Aktif' }
-        ];
+        // Fetch data from API
+        fetch('/api/mahallah-map')
+            .then(response => response.json())
+            .then(mahallahData => {
+                var markers = L.featureGroup();
 
-        var markers = L.featureGroup();
+                // Add markers to map
+                mahallahData.forEach(function(mahallah) {
+                    var popupContent = `
+                        <div class="p-2 min-w-[200px] font-['Manrope']">
+                            <div class="flex items-center justify-between mb-2 pb-2 border-b border-outline-variant/30">
+                                <h3 class="font-bold text-base text-primary">${mahallah.name}</h3>
+                                <span class="bg-primary-fixed text-on-primary-fixed text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${mahallah.status}</span>
+                            </div>
+                            <div class="space-y-1.5">
+                                <p class="text-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-outline">location_on</span> ${mahallah.wilayah}</p>
+                                <p class="text-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-outline">group</span> ${mahallah.members} Jamaah</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-outline-variant/30 flex justify-end">
+                                <a href="/mahallah/${mahallah.id}" class="text-xs font-semibold text-primary hover:text-primary-container flex items-center gap-1">Detail <span class="material-symbols-outlined text-[14px]">chevron_right</span></a>
+                            </div>
+                        </div>
+                    `;
 
-        // Add markers to map
-        mahallahData.forEach(function(mahallah) {
-            var popupContent = `
-                <div class="p-2 min-w-[200px] font-['Manrope']">
-                    <div class="flex items-center justify-between mb-2 pb-2 border-b border-outline-variant/30">
-                        <h3 class="font-bold text-base text-primary">${mahallah.name}</h3>
-                        <span class="bg-primary-fixed text-on-primary-fixed text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${mahallah.status}</span>
-                    </div>
-                    <div class="space-y-1.5">
-                        <p class="text-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-outline">location_on</span> ${mahallah.wilayah}</p>
-                        <p class="text-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-outline">group</span> ${mahallah.members} Jamaah</p>
-                    </div>
-                    <div class="mt-3 pt-2 border-t border-outline-variant/30 flex justify-end">
-                        <button class="text-xs font-semibold text-primary hover:text-primary-container flex items-center gap-1">Detail <span class="material-symbols-outlined text-[14px]">chevron_right</span></button>
-                    </div>
-                </div>
-            `;
-
-            var marker = L.marker([mahallah.lat, mahallah.lng], {icon: mahallahIcon})
-                .bindPopup(popupContent, {
-                    className: 'custom-popup rounded-xl shadow-lg border-0',
-                    minWidth: 220
+                    var marker = L.marker([mahallah.lat, mahallah.lng], {icon: mahallahIcon})
+                        .bindPopup(popupContent, {
+                            className: 'custom-popup rounded-xl shadow-lg border-0',
+                            minWidth: 220
+                        });
+                    markers.addLayer(marker);
                 });
-            markers.addLayer(marker);
-        });
-        
-        map.addLayer(markers);
+                
+                map.addLayer(markers);
 
-        // Fit map bounds to markers if there are any
-        if (mahallahData.length > 0) {
-            map.fitBounds(markers.getBounds(), {padding: [50, 50], maxZoom: 10});
-        }
+                // Fit map bounds to markers if there are any
+                if (mahallahData.length > 0) {
+                    map.fitBounds(markers.getBounds(), {padding: [50, 50], maxZoom: 12});
+                }
+            })
+            .catch(error => console.error('Error fetching mahallah data:', error));
     });
 </script>
 <style>

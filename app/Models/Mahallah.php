@@ -24,4 +24,9 @@ class Mahallah extends Model
     {
         return $this->belongsTo(Wilayah::class);
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

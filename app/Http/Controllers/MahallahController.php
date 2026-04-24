@@ -90,4 +90,28 @@ class MahallahController extends Controller
         $mahallah->delete();
         return redirect()->route('mahallah.index')->with('success', 'Data Mahallah berhasil dihapus');
     }
+
+    /**
+     * Get data for geospatial map dashboard
+     */
+    public function getMapData()
+    {
+        $mahallahs = Mahallah::with('wilayah')->get();
+        
+        $data = $mahallahs->map(function ($mahallah) {
+            return [
+                'id' => $mahallah->id,
+                'name' => $mahallah->nama_mahallah,
+                'wilayah' => $mahallah->wilayah ? $mahallah->wilayah->nama_wilayah : 'Tidak Ada Wilayah',
+                'lat' => $mahallah->latitude,
+                'lng' => $mahallah->longitude,
+                'status' => ucfirst($mahallah->status),
+                'members' => $mahallah->users()->count(),
+            ];
+        })->filter(function ($item) {
+            return !empty($item['lat']) && !empty($item['lng']);
+        });
+
+        return response()->json(array_values($data->toArray()));
+    }
 }

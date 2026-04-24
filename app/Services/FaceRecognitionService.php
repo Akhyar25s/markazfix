@@ -92,7 +92,7 @@ class FaceRecognitionService
     /**
      * Verifikasi wajah saat absensi
      */
-    public function verifyFace(User $user, $imageBase64, $similarityThreshold = 95.0)
+    public function verifyFace(User $user, $imageBase64, $similarityThreshold = 90.0)
     {
         try {
             $pendaftaran = PendaftaranWajah::where('pengguna_id', $user->id)->where('status', 'aktif')->first();
