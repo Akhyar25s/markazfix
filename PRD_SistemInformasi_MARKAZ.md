@@ -3,7 +3,7 @@
 
 ---
 
-**Versi Dokumen:** 1.0  
+**Versi Dokumen:** 1.1 (Revisi Peta & Face Recognition)
 **Tanggal:** 2025  
 **Disusun oleh:** Mahasiswa D3 Teknik Informatika  
 **Status:** Draft Final  
@@ -69,6 +69,8 @@ Dokumen PRD ini bertujuan untuk:
 
 Sistem Informasi MARKAZ adalah aplikasi berbasis web dan mobile yang dirancang untuk mengelola seluruh aspek operasional organisasi MARKAZ, mulai dari manajemen keanggotaan, penjadwalan dan pelaksanaan i'tikaf, pencatatan kegiatan individual, pelaporan, hingga dashboard statistik. Sistem ini mengintegrasikan teknologi face recognition berbasis AWS Rekognition untuk validasi absensi dan GPS geofencing untuk memastikan kehadiran fisik pada lokasi i'tikaf yang telah ditentukan.
 
+**Sistem Face Recognition** pada aplikasi ini menggunakan prinsip **Face Embedding & Verification**. Saat registrasi, sistem tidak hanya menyimpan gambar, melainkan mengekstrak fitur wajah menjadi vektor data matematis (*FaceId*) yang dienkripsi. Saat absensi, sistem melakukan pemindaian wajah secara *real-time* dengan teknologi **Liveness Detection** (Anti-Spoofing) untuk mencegah kecurangan menggunakan foto cetak atau layar HP, dan mencocokkannya dengan *FaceId* awal dengan tingkat akurasi (Similarity Score) minimal **90%**.
+
 ### 2.2 Platform
 
 | Platform | Teknologi | Target Pengguna |
@@ -122,6 +124,7 @@ Sistem Informasi MARKAZ adalah aplikasi berbasis web dan mobile yang dirancang u
 
 - Manajemen akun pengguna (registrasi, login, profil, enrollment wajah)
 - Manajemen struktur organisasi (wilayah, mahallah, keanggotaan)
+- Visualisasi peta interaktif (Geospatial Dashboard) untuk persebaran Mahallah berdasarkan Halaqah Wilayah dengan custom pin/marker.
 - Penjadwalan dan pengelolaan i'tikaf
 - Pemilihan peserta dan penugasan Amir I'tikaf
 - Absensi i'tikaf dengan face recognition dan validasi GPS
@@ -954,4 +957,4 @@ Sistem dinyatakan diterima dan siap digunakan apabila memenuhi seluruh kriteria 
 
 ---
 
-**Akhir Dokumen PRD v1.0**
+**Akhir Dokumen PRD v1.1**

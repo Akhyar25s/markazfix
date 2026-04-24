@@ -6,6 +6,9 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Leaflet CSS & JS for Geospatial Dashboard -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -302,6 +305,29 @@
 </div>
 </div>
 </div>
+
+<!-- Geospatial Dashboard Section -->
+<div class="bg-surface border border-outline-variant/30 rounded-xl overflow-hidden flex flex-col mt-8 mb-8 shadow-sm">
+    <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center bg-surface-bright">
+        <h2 class="font-h3 text-h3 text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary-container">map</span> Peta Persebaran Mahallah
+        </h2>
+        <div class="flex gap-2">
+            <select class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant text-sm rounded-lg focus:ring-primary focus:border-primary block p-2 outline-none">
+                <option>Semua Wilayah</option>
+                <option>Jakarta Selatan</option>
+                <option>Bandung Raya</option>
+                <option>Surabaya Timur</option>
+                <option>Medan Utara</option>
+            </select>
+        </div>
+    </div>
+    <div class="p-0">
+        <!-- Z-index set to 10 so it doesn't overlap the fixed header or sidebar -->
+        <div id="mahallah-map" class="w-full h-[450px] z-10 bg-slate-100"></div>
+    </div>
+</div>
+
 <!-- Main Grid Layout -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 <!-- Table Section -->
@@ -434,4 +460,96 @@
 </div>
 </main>
 </div>
+</div>
+
+<!-- Map Initialization Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map, centered on Indonesia
+        var map = L.map('mahallah-map').setView([-2.5489, 118.0149], 5);
+
+        // Add OpenStreetMap tile layer with light theme
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Custom icon for Mahallah
+        var mahallahIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div class="bg-primary-container text-on-primary-container w-10 h-10 rounded-full flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.3)] border-[3px] border-surface-container-lowest transform transition-transform hover:scale-110"><span class="material-symbols-outlined text-[20px]">mosque</span></div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40]
+        });
+
+        // Dummy data for Mahallah (This will be replaced by database query)
+        var mahallahData = [
+            { name: "Masjid Raya Bandung", wilayah: "Bandung Raya", lat: -6.9218, lng: 107.6061, members: 150, status: 'Aktif' },
+            { name: "Islamic Center Jakarta", wilayah: "Jakarta Selatan", lat: -6.2088, lng: 106.8456, members: 320, status: 'Aktif' },
+            { name: "Masjid Al-Falah Surabaya", wilayah: "Surabaya Timur", lat: -7.2847, lng: 112.7441, members: 210, status: 'Aktif' },
+            { name: "Masjid Agung Medan", wilayah: "Medan Utara", lat: 3.5852, lng: 98.6756, members: 180, status: 'Aktif' },
+            { name: "Masjid Baiturrahman", wilayah: "Aceh", lat: 5.5536, lng: 95.3173, members: 400, status: 'Aktif' },
+            { name: "Masjid Istiqlal", wilayah: "Jakarta Pusat", lat: -6.1702, lng: 106.8310, members: 1200, status: 'Aktif' },
+            { name: "Masjid Jogokariyan", wilayah: "Yogyakarta", lat: -7.8236, lng: 110.3644, members: 500, status: 'Aktif' }
+        ];
+
+        var markers = L.featureGroup();
+
+        // Add markers to map
+        mahallahData.forEach(function(mahallah) {
+            var popupContent = `
+                <div class="p-2 min-w-[200px] font-['Manrope']">
+                    <div class="flex items-center justify-between mb-2 pb-2 border-b border-outline-variant/30">
+                        <h3 class="font-bold text-base text-primary">${mahallah.name}</h3>
+                        <span class="bg-primary-fixed text-on-primary-fixed text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${mahallah.status}</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        <p class="text-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-outline">location_on</span> ${mahallah.wilayah}</p>
+                        <p class="text-sm text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-outline">group</span> ${mahallah.members} Jamaah</p>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-outline-variant/30 flex justify-end">
+                        <button class="text-xs font-semibold text-primary hover:text-primary-container flex items-center gap-1">Detail <span class="material-symbols-outlined text-[14px]">chevron_right</span></button>
+                    </div>
+                </div>
+            `;
+
+            var marker = L.marker([mahallah.lat, mahallah.lng], {icon: mahallahIcon})
+                .bindPopup(popupContent, {
+                    className: 'custom-popup rounded-xl shadow-lg border-0',
+                    minWidth: 220
+                });
+            markers.addLayer(marker);
+        });
+        
+        map.addLayer(markers);
+
+        // Fit map bounds to markers if there are any
+        if (mahallahData.length > 0) {
+            map.fitBounds(markers.getBounds(), {padding: [50, 50], maxZoom: 10});
+        }
+    });
+</script>
+<style>
+    /* Leaflet popup customization to match theme */
+    .leaflet-popup-content-wrapper {
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        padding: 0;
+        overflow: hidden;
+    }
+    .leaflet-popup-content {
+        margin: 0;
+        line-height: 1.5;
+    }
+    .leaflet-container a.leaflet-popup-close-button {
+        top: 8px;
+        right: 8px;
+        color: #717973;
+    }
+    .leaflet-container a.leaflet-popup-close-button:hover {
+        color: #ba1a1a;
+    }
+</style>
 </body></html>
