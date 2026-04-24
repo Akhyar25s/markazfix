@@ -37,6 +37,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('wilayah', WilayahController::class);
     Route::resource('mahallah', MahallahController::class);
     Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
+
+    // Rute Face Recognition
+    Route::get('/face/enroll', [\App\Http\Controllers\FaceRecognitionController::class, 'showEnrollmentForm'])->name('face.enroll');
+    Route::post('/face/enroll', [\App\Http\Controllers\FaceRecognitionController::class, 'enroll']);
+    Route::get('/face/verify', [\App\Http\Controllers\FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');
+    Route::post('/face/verify', [\App\Http\Controllers\FaceRecognitionController::class, 'verify']);
     
     // Rute logout sederhana (biasanya POST, ini untuk simulasi)
     Route::post('/logout', function (\Illuminate\Http\Request $request) {

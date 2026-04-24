@@ -90,20 +90,11 @@ class FaceRecognitionService
     }
 
     /**
-     * Verifikasi wajah saat absensi
+     * Verifikasi wajah saat absensi (1:N search)
      */
-    public function verifyFace(User $user, $imageBase64, $similarityThreshold = 90.0)
+    public function verifyFace($imageBase64, $similarityThreshold = 90.0)
     {
         try {
-            $pendaftaran = PendaftaranWajah::where('pengguna_id', $user->id)->where('status', 'aktif')->first();
-            
-            if (!$pendaftaran) {
-                return [
-                    'success' => false,
-                    'message' => 'Wajah Anda belum terdaftar di sistem. Silakan hubungi admin.'
-                ];
-            }
-
             // Remove data:image/jpeg;base64, part if exists
             if (preg_match('/^data:image\/(\w+);base64,/', $imageBase64)) {
                 $data = substr($imageBase64, strpos($imageBase64, ',') + 1);
@@ -125,23 +116,26 @@ class FaceRecognitionService
             if (empty($result['FaceMatches'])) {
                 return [
                     'success' => false,
-                    'message' => 'Wajah tidak dikenali atau tidak cocok. Silakan coba lagi.'
+                    'message' => 'Wajah tidak dikenali atau tidak cocok.'
                 ];
             }
 
             $matchedFaceId = $result['FaceMatches'][0]['Face']['FaceId'];
             $similarity = $result['FaceMatches'][0]['Similarity'];
 
-            if ($matchedFaceId === $pendaftaran->aws_face_id) {
+            $pendaftaran = PendaftaranWajah::where('aws_face_id', $matchedFaceId)->where('status', 'aktif')->first();
+
+            if ($pendaftaran) {
                 return [
                     'success' => true,
                     'message' => 'Verifikasi wajah berhasil.',
-                    'similarity' => $similarity
+                    'similarity' => $similarity,
+                    'user_id' => $pendaftaran->pengguna_id
                 ];
             } else {
                 return [
                     'success' => false,
-                    'message' => 'Wajah yang dipindai tidak cocok dengan data pendaftaran Anda.'
+                    'message' => 'Wajah cocok namun tidak ada di data pendaftaran sistem.'
                 ];
             }
 
@@ -154,6 +148,7 @@ class FaceRecognitionService
             ];
         }
     }
+
     
     /**
      * Utility method untuk memastikan collection ada

@@ -204,6 +204,10 @@
 <span class="material-symbols-outlined">verified_user</span>
                 Laporan Approval
             </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 active:scale-[0.98] transform transition-transform" href="{{ route('face.verify') }}">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+                Scanner Absensi
+            </a>
 <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 active:scale-[0.98] transform transition-transform" href="#">
 <span class="material-symbols-outlined">analytics</span>
                 Statistik
@@ -211,6 +215,10 @@
 <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 active:scale-[0.98] transform transition-transform" href="#">
 <span class="material-symbols-outlined">settings</span>
                 Pengaturan
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 active:scale-[0.98] transform transition-transform" href="{{ route('face.enroll') }}">
+<span class="material-symbols-outlined">face</span>
+                Identitas Wajah
             </a>
 </nav>
 <div class="px-4 mt-auto space-y-1">
