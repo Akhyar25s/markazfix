@@ -38,6 +38,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('mahallah', MahallahController::class);
     Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
 
+    // Rute Laporan Presensi
+    Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/{id}', [\App\Http\Controllers\LaporanController::class, 'show'])->name('laporan.show');
+    Route::get('/laporan/{id}/export-pdf', [\App\Http\Controllers\LaporanController::class, 'exportPdf'])->name('laporan.export-pdf');
+    Route::get('/laporan/{id}/export-csv', [\App\Http\Controllers\LaporanController::class, 'exportCsv'])->name('laporan.export-csv');
+
     // Rute Face Recognition
     Route::get('/face/enroll', [\App\Http\Controllers\FaceRecognitionController::class, 'showEnrollmentForm'])->name('face.enroll');
     Route::post('/face/enroll', [\App\Http\Controllers\FaceRecognitionController::class, 'enroll']);
