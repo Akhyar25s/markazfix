@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\JadwalItikaf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class LaporanController extends Controller
 {
@@ -76,10 +77,13 @@ class LaporanController extends Controller
             // Header info
             fputcsv($handle, ['Laporan Absensi I\'tikaf']);
             fputcsv($handle, ['Kegiatan', $jadwal->nama_itikaf]);
+            if (Auth::user()->role === 'pengurus_wilayah') {
+                fputcsv($handle, ['Wilayah', Auth::user()->wilayah->nama_wilayah ?? 'Wilayah Anda']);
+            }
             fputcsv($handle, ['Lokasi', $jadwal->nama_lokasi ?? '-']);
             fputcsv($handle, ['Tanggal', Carbon::parse($jadwal->tanggal_mulai)->format('d M Y') . ' s/d ' . Carbon::parse($jadwal->tanggal_selesai)->format('d M Y')]);
             fputcsv($handle, ['Digenerate pada', now()->format('d M Y H:i')]);
-            fputcsv($handle, []); // baris kosong
+            fputcsv($handle, []); 
 
             // Header kolom
             fputcsv($handle, ['No', 'Nama Peserta', 'Email', 'Mahallah/Wilayah', 'Waktu Absen', 'Jarak (m)', 'Status GPS', 'Status Wajah', 'Status Absen']);
@@ -106,12 +110,13 @@ class LaporanController extends Controller
     }
 
     // ============================================================
-    // PRIVATE HELPERS
+    // PRIVATE HELPERS (With Scoping)
     // ============================================================
 
     private function getAbsensiData(int $jadwal_id)
     {
-        return DB::table('absensi_itikafs as a')
+        $user = Auth::user();
+        $query = DB::table('absensi_itikafs as a')
             ->join('users as u', 'u.id', '=', 'a.pengguna_id')
             ->leftJoin('wilayahs as w', 'w.id', '=', 'u.wilayah_id')
             ->where('a.jadwal_itikaf_id', $jadwal_id)
@@ -126,23 +131,45 @@ class LaporanController extends Controller
                 'a.status_absen',
                 'a.latitude_aktual',
                 'a.longitude_aktual',
-            )
-            ->orderBy('a.waktu_absen', 'asc')
-            ->get();
+            );
+
+        // SCOPE: Filter data jika user adalah Pengurus Wilayah
+        if ($user->role === 'pengurus_wilayah') {
+            $query->where('u.wilayah_id', $user->wilayah_id);
+        }
+
+        return $query->orderBy('a.waktu_absen', 'asc')->get();
     }
 
     private function getStats(int $jadwal_id, JadwalItikaf $jadwal): array
     {
-        $totalPeserta   = DB::table('peserta_itikafs')->where('jadwal_id', $jadwal_id)->count();
-        $totalHadir     = DB::table('absensi_itikafs')->where('jadwal_itikaf_id', $jadwal_id)->where('status_absen', 'berhasil')->distinct('pengguna_id')->count();
-        $totalGagal     = DB::table('absensi_itikafs')->where('jadwal_itikaf_id', $jadwal_id)->where('status_absen', 'gagal')->count();
-        $pctKehadiran   = $totalPeserta > 0 ? round(($totalHadir / $totalPeserta) * 100, 1) : 0;
+        $user = Auth::user();
+        
+        $pesertaQuery = DB::table('peserta_itikafs as p')
+                          ->join('users as u', 'u.id', '=', 'p.pengguna_id')
+                          ->where('p.jadwal_id', $jadwal_id);
+
+        $absensiQuery = DB::table('absensi_itikafs as a')
+                          ->join('users as u', 'u.id', '=', 'a.pengguna_id')
+                          ->where('a.jadwal_itikaf_id', $jadwal_id);
+
+        // SCOPE: Filter statistik jika user adalah Pengurus Wilayah
+        if ($user->role === 'pengurus_wilayah') {
+            $pesertaQuery->where('u.wilayah_id', $user->wilayah_id);
+            $absensiQuery->where('u.wilayah_id', $user->wilayah_id);
+        }
+
+        $totalPeserta = $pesertaQuery->count();
+        $totalHadir   = (clone $absensiQuery)->where('a.status_absen', 'berhasil')->distinct('a.pengguna_id')->count();
+        $totalGagal   = (clone $absensiQuery)->where('a.status_absen', 'gagal')->count();
+        
+        $pctKehadiran = $totalPeserta > 0 ? round(($totalHadir / $totalPeserta) * 100, 1) : 0;
 
         return [
-            'total_peserta'   => $totalPeserta,
-            'total_hadir'     => $totalHadir,
-            'total_gagal'     => $totalGagal,
-            'pct_kehadiran'   => $pctKehadiran,
+            'total_peserta'     => $totalPeserta,
+            'total_hadir'       => $totalHadir,
+            'total_gagal'       => $totalGagal,
+            'pct_kehadiran'     => $pctKehadiran,
             'total_tidak_hadir' => max(0, $totalPeserta - $totalHadir),
         ];
     }

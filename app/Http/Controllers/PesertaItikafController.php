@@ -16,10 +16,6 @@ class PesertaItikafController extends Controller
      */
     public function index()
     {
-        if (Auth::user()->role !== 'pengurus_wilayah') {
-            return redirect('/dashboard')->with('error', 'Akses ditolak.');
-        }
-
         // Tampilkan semua jadwal yang statusnya 'dijadwalkan' atau 'berlangsung'
         $jadwals = JadwalItikaf::with('mahallah')
                     ->whereIn('status', ['dijadwalkan', 'berlangsung'])
@@ -34,20 +30,16 @@ class PesertaItikafController extends Controller
      */
     public function create($jadwal_id)
     {
-        if (Auth::user()->role !== 'pengurus_wilayah') {
-            return redirect('/dashboard')->with('error', 'Akses ditolak.');
-        }
-
         $jadwal = JadwalItikaf::findOrFail($jadwal_id);
         $user = Auth::user();
 
-        // Ambil semua anggota yang berada di wilayah pengurus ini
+        // SCOPE: Ambil semua anggota yang berada di wilayah pengurus ini
         $anggotas = User::where('role', 'anggota')
                         ->where('wilayah_id', $user->wilayah_id)
                         ->where('status', 'aktif')
                         ->get();
 
-        // Ambil ID anggota yang sudah terdaftar di jadwal ini
+        // Ambil ID anggota yang sudah terdaftar di jadwal ini (untuk semua wilayah, agar tidak double register)
         $pesertaTerdaftar = PesertaItikaf::where('jadwal_id', $jadwal_id)->pluck('pengguna_id')->toArray();
 
         return view('peserta.create', compact('jadwal', 'anggotas', 'pesertaTerdaftar'));
@@ -58,23 +50,25 @@ class PesertaItikafController extends Controller
      */
     public function store(Request $request, $jadwal_id)
     {
-        if (Auth::user()->role !== 'pengurus_wilayah') {
-            return redirect('/dashboard')->with('error', 'Akses ditolak.');
-        }
-
         $request->validate([
             'pengguna_ids' => 'required|array',
             'pengguna_ids.*' => 'exists:users,id'
         ]);
 
         $jadwal = JadwalItikaf::findOrFail($jadwal_id);
+        $user = Auth::user();
         
         try {
             DB::beginTransaction();
 
-            // Pada sistem nyata, mungkin perlu mengecek kapasitas maksimal jadwal
-
             foreach ($request->pengguna_ids as $pengguna_id) {
+                // SECURITY CHECK: Pastikan user yang didaftarkan memang milik wilayah pengurus ini
+                $anggota = User::where('id', $pengguna_id)
+                               ->where('wilayah_id', $user->wilayah_id)
+                               ->first();
+
+                if (!$anggota) continue; // Skip jika mencoba mendaftarkan user wilayah lain
+
                 // Cek apakah sudah terdaftar
                 $exists = PesertaItikaf::where('jadwal_id', $jadwal_id)
                                        ->where('pengguna_id', $pengguna_id)
@@ -90,7 +84,7 @@ class PesertaItikafController extends Controller
             }
 
             DB::commit();
-            return redirect('/peserta')->with('success', count($request->pengguna_ids) . ' peserta berhasil didaftarkan ke jadwal.');
+            return redirect('/peserta')->with('success', 'Peserta berhasil didaftarkan ke jadwal.');
 
         } catch (\Exception $e) {
             DB::rollBack();

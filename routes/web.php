@@ -6,6 +6,9 @@ use App\Http\Controllers\JadwalItikafController;
 use App\Http\Controllers\PesertaItikafController;
 use App\Http\Controllers\WilayahController;
 use App\Http\Controllers\MahallahController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\FaceRecognitionController;
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -19,38 +22,61 @@ Route::get('/register', [AuthController::class, 'showRegister']);
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware(['auth'])->group(function () {
+
+    // Dashboard (semua role)
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-    
-    // Rute Jadwal I'tikaf (Pengurus Inti)
-    Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');
-    Route::get('/jadwal/create', [JadwalItikafController::class, 'create'])->name('jadwal.create');
-    Route::post('/jadwal', [JadwalItikafController::class, 'store'])->name('jadwal.store');
-    
-    // Rute Peserta I'tikaf (Pengurus Wilayah)
-    Route::get('/peserta', [PesertaItikafController::class, 'index'])->name('peserta.index');
-    Route::get('/peserta/{id}/daftar', [PesertaItikafController::class, 'create'])->name('peserta.create');
-    Route::post('/peserta/{id}/daftar', [PesertaItikafController::class, 'store'])->name('peserta.store');
-    
-    // Rute Wilayah & Mahallah
-    Route::resource('wilayah', WilayahController::class);
-    Route::resource('mahallah', MahallahController::class);
-    Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
 
-    // Rute Laporan Presensi
-    Route::get('/laporan', [\App\Http\Controllers\LaporanController::class, 'index'])->name('laporan.index');
-    Route::get('/laporan/{id}', [\App\Http\Controllers\LaporanController::class, 'show'])->name('laporan.show');
-    Route::get('/laporan/{id}/export-pdf', [\App\Http\Controllers\LaporanController::class, 'exportPdf'])->name('laporan.export-pdf');
-    Route::get('/laporan/{id}/export-csv', [\App\Http\Controllers\LaporanController::class, 'exportCsv'])->name('laporan.export-csv');
+    // ============================================================
+    // PENGURUS INTI ONLY
+    // ============================================================
+    Route::middleware('role:pengurus_inti')->group(function () {
+        // Kelola Jadwal I'tikaf
+        Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');
+        Route::get('/jadwal/create', [JadwalItikafController::class, 'create'])->name('jadwal.create');
+        Route::post('/jadwal', [JadwalItikafController::class, 'store'])->name('jadwal.store');
 
-    // Rute Face Recognition
-    Route::get('/face/enroll', [\App\Http\Controllers\FaceRecognitionController::class, 'showEnrollmentForm'])->name('face.enroll');
-    Route::post('/face/enroll', [\App\Http\Controllers\FaceRecognitionController::class, 'enroll']);
-    Route::get('/face/verify', [\App\Http\Controllers\FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');
-    Route::post('/face/verify', [\App\Http\Controllers\FaceRecognitionController::class, 'verify']);
-    
-    // Rute logout sederhana (biasanya POST, ini untuk simulasi)
+        // Kelola Wilayah & Mahallah
+        Route::resource('wilayah', WilayahController::class);
+        Route::resource('mahallah', MahallahController::class);
+    });
+
+    // ============================================================
+    // PENGURUS WILAYAH ONLY
+    // ============================================================
+    Route::middleware('role:pengurus_wilayah')->group(function () {
+        // Kelola Peserta I'tikaf
+        Route::get('/peserta', [PesertaItikafController::class, 'index'])->name('peserta.index');
+        Route::get('/peserta/{id}/daftar', [PesertaItikafController::class, 'create'])->name('peserta.create');
+        Route::post('/peserta/{id}/daftar', [PesertaItikafController::class, 'store'])->name('peserta.store');
+
+        // Pendaftaran Wajah (untuk mendaftarkan anggota wilayahnya)
+        Route::get('/face/enroll', [FaceRecognitionController::class, 'showEnrollmentForm'])->name('face.enroll');
+        Route::post('/face/enroll', [FaceRecognitionController::class, 'enroll']);
+    });
+
+    // ============================================================
+    // PENGURUS INTI & PENGURUS WILAYAH (keduanya bisa)
+    // ============================================================
+    Route::middleware('role:pengurus_inti,pengurus_wilayah')->group(function () {
+        // Laporan Presensi (Sudah di-scope di Controller)
+        Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/{id}', [LaporanController::class, 'show'])->name('laporan.show');
+        Route::get('/laporan/{id}/export-pdf', [LaporanController::class, 'exportPdf'])->name('laporan.export-pdf');
+        Route::get('/laporan/{id}/export-csv', [LaporanController::class, 'exportCsv'])->name('laporan.export-csv');
+
+        // API peta (dipakai dashboard)
+        Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
+
+        // Absensi Face Recognition
+        Route::get('/face/verify', [FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');
+        Route::post('/face/verify', [FaceRecognitionController::class, 'verify']);
+    });
+
+    // ============================================================
+    // LOGOUT (semua role)
+    // ============================================================
     Route::post('/logout', function (\Illuminate\Http\Request $request) {
         \Illuminate\Support\Facades\Auth::logout();
         $request->session()->invalidate();
