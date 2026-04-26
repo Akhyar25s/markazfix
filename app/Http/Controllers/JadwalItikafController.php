@@ -16,7 +16,7 @@ class JadwalItikafController extends Controller
     {
         // Jika pengurus inti, tampilkan semua jadwal
         if (Auth::user()->role === 'pengurus_inti') {
-            $jadwals = JadwalItikaf::with(['mahallah', 'pembuat'])->orderBy('tanggal_mulai', 'desc')->get();
+            $jadwals = JadwalItikaf::with(['pembuat'])->orderBy('tanggal_mulai', 'desc')->get();
             return view('jadwal.index', compact('jadwals'));
         }
         
@@ -47,25 +47,81 @@ class JadwalItikafController extends Controller
         }
 
         $request->validate([
-            'nama_kegiatan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
+            'nama_itikaf' => 'required|string|max:150',
+            'keterangan' => 'nullable|string',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'target_mahallah_id' => 'required|exists:mahallahs,id',
-            'kapasitas_maksimal' => 'required|integer|min:1',
+            'nama_lokasi' => 'required|string|max:150',
+            'radius_meter' => 'required|integer|min:1',
         ]);
 
         JadwalItikaf::create([
-            'nama_kegiatan' => $request->nama_kegiatan,
-            'deskripsi' => $request->deskripsi,
+            'nama_itikaf' => $request->nama_itikaf,
+            'keterangan' => $request->keterangan,
             'tanggal_mulai' => $request->tanggal_mulai,
             'tanggal_selesai' => $request->tanggal_selesai,
-            'target_mahallah_id' => $request->target_mahallah_id,
+            'nama_lokasi' => $request->nama_lokasi,
+            'radius_meter' => $request->radius_meter,
             'dibuat_oleh' => Auth::id(),
-            'kapasitas_maksimal' => $request->kapasitas_maksimal,
-            'status' => 'akan_datang',
+            'status' => 'dijadwalkan',
         ]);
 
         return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil dibuat!');
+    }
+
+    /**
+     * Menampilkan form edit jadwal
+     */
+    public function edit(JadwalItikaf $jadwal)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $mahallahs = Mahallah::all();
+        return view('jadwal.edit', compact('jadwal', 'mahallahs'));
+    }
+
+    /**
+     * Memperbarui jadwal i'tikaf di database
+     */
+    public function update(Request $request, JadwalItikaf $jadwal)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $request->validate([
+            'nama_itikaf' => 'required|string|max:150',
+            'keterangan' => 'nullable|string',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'nama_lokasi' => 'required|string|max:150',
+            'radius_meter' => 'required|integer|min:1',
+        ]);
+
+        $jadwal->update([
+            'nama_itikaf' => $request->nama_itikaf,
+            'keterangan' => $request->keterangan,
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_selesai' => $request->tanggal_selesai,
+            'nama_lokasi' => $request->nama_lokasi,
+            'radius_meter' => $request->radius_meter,
+        ]);
+
+        return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil diperbarui!');
+    }
+
+    /**
+     * Menghapus jadwal i'tikaf
+     */
+    public function destroy(JadwalItikaf $jadwal)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $jadwal->delete();
+        return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil dihapus!');
     }
 }

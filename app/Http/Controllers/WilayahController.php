@@ -21,7 +21,8 @@ class WilayahController extends Controller
      */
     public function create()
     {
-        return view('wilayah.create');
+        $users = \App\Models\User::where('role', 'pengurus_wilayah')->get();
+        return view('wilayah.create', compact('users'));
     }
 
     /**
@@ -55,7 +56,8 @@ class WilayahController extends Controller
      */
     public function edit(Wilayah $wilayah)
     {
-        return view('wilayah.edit', compact('wilayah'));
+        $users = \App\Models\User::where('role', 'pengurus_wilayah')->get();
+        return view('wilayah.edit', compact('wilayah', 'users'));
     }
 
     /**

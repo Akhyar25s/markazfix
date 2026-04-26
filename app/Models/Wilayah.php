@@ -27,4 +27,9 @@ class Wilayah extends Model
     {
         return $this->hasMany(Mahallah::class);
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

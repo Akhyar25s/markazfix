@@ -86,9 +86,8 @@ class FaceRecognitionController extends Controller
         // Service saat ini di set untuk verifikasi 1:1, padahal absen butuh 1:N.
         // Kita gunakan $this->faceService->verifyFace() tetapi sesuaikan:
         
-        // Memanggil verifyFace (saat ini logicnya 1:1 jika pakai expectedFaceId, jika tidak 1:N)
-        // Kita panggil dengan expectedFaceId = null agar mencocokkan dengan seluruh database (1:N)
-        $result = $this->faceService->verifyFace($user, $imageBase64);
+        // Memanggil verifyFace (saat ini logicnya 1:N)
+        $result = $this->faceService->verifyFace($imageBase64);
 
         if ($result['success']) {
             // Karena sukses, kita dapatkan face_id atau similarity di result.

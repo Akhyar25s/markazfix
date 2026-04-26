@@ -20,9 +20,9 @@ class PesertaItikafController extends Controller
             return redirect('/dashboard')->with('error', 'Akses ditolak.');
         }
 
-        // Tampilkan semua jadwal yang statusnya 'akan_datang' atau 'berjalan'
+        // Tampilkan semua jadwal yang statusnya 'dijadwalkan' atau 'berlangsung'
         $jadwals = JadwalItikaf::with('mahallah')
-                    ->whereIn('status', ['akan_datang', 'berjalan'])
+                    ->whereIn('status', ['dijadwalkan', 'berlangsung'])
                     ->orderBy('tanggal_mulai', 'asc')
                     ->get();
                     

@@ -1,242 +1,171 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Pendaftaran Wajah - Markaz</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "primary": "#002d1a",
-                        "primary-container": "#1a432f",
-                        "on-primary-container": "#84b096",
-                        "on-primary": "#ffffff",
-                        "background": "#f8f9fa",
-                        "on-background": "#191c1d",
-                        "surface": "#ffffff",
-                        "on-surface": "#191c1d",
-                        "surface-variant": "#e1e3e4",
-                        "on-surface-variant": "#414943",
-                        "outline": "#717973",
-                        "error": "#ba1a1a",
-                        "on-error": "#ffffff",
-                        "success": "#116d3a"
-                    },
-                    "fontFamily": {
-                        "sans": ["Manrope", "sans-serif"]
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-background text-on-background font-sans antialiased h-screen overflow-hidden flex flex-col justify-center items-center p-4">
+@extends('layouts.app')
 
-<div class="max-w-xl w-full bg-surface rounded-3xl shadow-xl overflow-hidden border border-outline/20">
-    <!-- Header -->
-    <div class="bg-primary text-on-primary p-6 text-center">
-        <span class="material-symbols-outlined text-[48px] mb-2 opacity-90">face</span>
-        <h1 class="text-2xl font-bold tracking-tight">Pendaftaran Wajah</h1>
-        <p class="text-on-primary/80 mt-1 text-sm">Persiapan sistem presensi otomatis I'tikaf.</p>
+@section('title', 'Pendaftaran Wajah - Markaz')
+
+@section('content')
+<div class="max-w-3xl mx-auto space-y-6 animate-fade-in pb-8">
+    <div class="flex flex-col gap-2">
+        <h1 class="text-3xl font-extrabold tracking-tight text-foreground">Pendaftaran Wajah (Enrollment)</h1>
+        <p class="text-muted-foreground">Daftarkan wajah Anda untuk absensi I'tikaf dan kegiatan lainnya menggunakan teknologi biometrik yang aman.</p>
     </div>
 
-    <!-- Content -->
-    <div class="p-8">
-        @if(isset($isRegistered) && $isRegistered)
-            <div class="bg-green-50 border border-green-200 text-green-800 rounded-2xl p-6 text-center">
-                <span class="material-symbols-outlined text-green-600 text-[48px] mb-2">check_circle</span>
-                <h2 class="text-xl font-bold mb-2">Wajah Sudah Terdaftar!</h2>
-                <p class="text-sm">Anda telah mendaftarkan profil wajah Anda di sistem. Anda siap mengikuti presensi otomatis.</p>
-                <div class="mt-6 flex justify-center gap-3">
-                    <a href="{{ route('dashboard') }}" class="px-5 py-2.5 bg-surface border border-outline/30 rounded-xl font-semibold hover:bg-surface-variant transition-colors">Ke Dashboard</a>
-                    <button onclick="startCamera()" class="px-5 py-2.5 bg-primary text-on-primary rounded-xl font-semibold hover:bg-primary-container transition-colors shadow-md">Daftar Ulang Wajah</button>
-                </div>
-            </div>
-        @endif
-
-        <div id="camera-container" class="{{ (isset($isRegistered) && $isRegistered) ? 'hidden' : 'block' }}">
-            <!-- Camera Feed -->
-            <div class="relative w-full aspect-square md:aspect-video bg-black rounded-2xl overflow-hidden shadow-inner mb-6 border-4 border-surface-variant">
-                <video id="videoElement" autoplay playsinline class="w-full h-full object-cover transform scale-x-[-1]"></video>
-                
-                <!-- Overlay Guides -->
-                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div class="w-48 h-64 border-2 border-dashed border-white/50 rounded-full flex items-center justify-center">
-                        <div class="w-2 h-2 bg-white/50 rounded-full absolute top-1/3"></div>
-                    </div>
-                </div>
-
-                <!-- Loading / Error State -->
-                <div id="camera-overlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-6 text-center">
-                    <span class="material-symbols-outlined text-4xl mb-3 animate-spin">sync</span>
-                    <p class="text-sm font-medium">Memulai kamera...</p>
-                </div>
-            </div>
-
-            <div class="space-y-4">
-                <div class="flex items-start gap-3 p-4 bg-surface-variant/30 rounded-xl">
-                    <span class="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
-                    <div class="text-sm text-on-surface-variant">
-                        <p class="font-semibold mb-1 text-on-surface">Tips Pendaftaran Optimal:</p>
-                        <ul class="list-disc pl-4 space-y-1">
-                            <li>Pastikan wajah Anda berada tepat di dalam garis oval putus-putus.</li>
-                            <li>Gunakan pencahayaan yang terang, hindari membelakangi cahaya (backlight).</li>
-                            <li>Lepaskan kacamata gelap atau masker.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <a href="{{ route('dashboard') }}" class="flex-1 px-5 py-3 text-center bg-surface border border-outline/30 text-on-surface rounded-xl font-semibold hover:bg-surface-variant transition-colors">Batal</a>
-                    <button id="captureBtn" class="flex-[2] px-5 py-3 flex items-center justify-center gap-2 bg-primary text-on-primary rounded-xl font-bold hover:bg-primary-container transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span class="material-symbols-outlined">photo_camera</span>
-                        Daftarkan Wajah
-                    </button>
-                </div>
-            </div>
-            
-            <canvas id="canvasElement" class="hidden"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Modal / Toast -->
-<div id="toast" class="fixed top-6 right-6 transform transition-all duration-300 translate-x-[150%] opacity-0 bg-white shadow-2xl rounded-2xl p-4 flex items-center gap-4 border border-outline/10 z-50 min-w-[300px]">
-    <div id="toast-icon-container" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-        <span id="toast-icon" class="material-symbols-outlined text-white"></span>
-    </div>
-    <div>
-        <h4 id="toast-title" class="font-bold text-on-surface"></h4>
-        <p id="toast-message" class="text-sm text-on-surface-variant"></p>
-    </div>
-</div>
-
-<script>
-    const video = document.getElementById('videoElement');
-    const canvas = document.getElementById('canvasElement');
-    const captureBtn = document.getElementById('captureBtn');
-    const cameraOverlay = document.getElementById('camera-overlay');
-    const cameraContainer = document.getElementById('camera-container');
-    let stream = null;
-
-    async function startCamera() {
-        if(cameraContainer.classList.contains('hidden')) {
-            cameraContainer.classList.remove('hidden');
-        }
-
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: "user",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                } 
-            });
-            video.srcObject = stream;
-            
-            video.onloadedmetadata = () => {
-                cameraOverlay.style.display = 'none';
-                captureBtn.disabled = false;
-            };
-        } catch (err) {
-            console.error("Gagal mengakses kamera: ", err);
-            cameraOverlay.innerHTML = `
-                <span class="material-symbols-outlined text-error text-4xl mb-3">videocam_off</span>
-                <p class="text-sm font-medium text-error mb-1">Gagal Mengakses Kamera</p>
-                <p class="text-xs text-white/70">Mohon berikan izin browser untuk mengakses kamera Anda.</p>
-            `;
-            captureBtn.disabled = true;
-        }
-    }
-
-    // Auto start if container is visible
-    if(!cameraContainer.classList.contains('hidden')) {
-        startCamera();
-    }
-
-    captureBtn.addEventListener('click', async () => {
-        // Disable button and show loading
-        const originalText = captureBtn.innerHTML;
-        captureBtn.disabled = true;
-        captureBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Memproses...';
-
-        // Draw video frame to canvas
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
+    <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl overflow-hidden relative">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 z-0 pointer-events-none"></div>
         
-        // Mirror the canvas context since video is mirrored via CSS
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        <div class="relative z-10 p-2 sm:p-6">
+            @if($isRegistered)
+            <div class="mb-6 bg-green-500/10 border border-green-500/20 text-green-500 p-4 rounded-xl flex items-start gap-3">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6 mt-0.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <h3 class="font-bold">Wajah Sudah Terdaftar</h3>
+                    <p class="text-sm mt-1">Anda sudah melakukan pendaftaran wajah. Anda bisa mendaftar ulang jika ingin memperbarui data biometrik Anda.</p>
+                </div>
+            </div>
+            @endif
 
-        // Get base64 JPEG
-        const base64Image = canvas.toDataURL('image/jpeg', 0.9);
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Camera Section -->
+                <div class="flex-1 flex flex-col items-center">
+                    <div class="relative w-full max-w-[320px] aspect-[3/4] bg-slate-900 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg shadow-primary/10">
+                        <video id="webcam" autoplay playsinline class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
+                        <canvas id="canvas" class="hidden"></canvas>
+                        
+                        <!-- Overlay Frame for Face Positioning -->
+                        <div class="absolute inset-0 pointer-events-none border-[12px] border-background/20 z-10"></div>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                            <div class="w-48 h-64 border-2 border-dashed border-primary/70 rounded-[50%] animate-pulse"></div>
+                        </div>
 
-        // Send to backend
-        try {
-            const token = document.querySelector('meta[name="csrf-token"]').content;
-            const response = await fetch('/face/enroll', {
+                        <!-- Status Overlay -->
+                        <div id="status-overlay" class="absolute inset-0 bg-background/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center hidden">
+                            <div class="h-10 w-10 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-4"></div>
+                            <p class="text-primary font-semibold">Memproses wajah...</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 w-full max-w-[320px] flex gap-3">
+                        <x-button id="btn-start" type="button" class="flex-1" variant="outline">Nyalakan Kamera</x-button>
+                        <x-button id="btn-capture" type="button" class="flex-1 hidden">Ambil Foto</x-button>
+                    </div>
+                </div>
+
+                <!-- Instructions Section -->
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg mb-4 text-foreground">Panduan Pendaftaran:</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <div class="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
+                            <p class="text-sm text-muted-foreground">Pastikan Anda berada di ruangan dengan pencahayaan yang cukup. Hindari cahaya langsung dari belakang (backlight).</p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
+                            <p class="text-sm text-muted-foreground">Posisikan wajah Anda tepat di dalam bingkai oval putus-putus pada layar kamera.</p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
+                            <p class="text-sm text-muted-foreground">Lepaskan masker, kacamata hitam, atau topi yang menutupi bagian wajah Anda.</p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
+                            <p class="text-sm text-muted-foreground">Klik "Ambil Foto" saat Anda sudah siap. Sistem akan mengirim data wajah ke server yang aman.</p>
+                        </li>
+                    </ul>
+
+                    <div id="result-message" class="mt-6 hidden p-4 rounded-xl text-sm font-medium"></div>
+                </div>
+            </div>
+        </div>
+    </x-card>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const btnStart = document.getElementById('btn-start');
+        const btnCapture = document.getElementById('btn-capture');
+        const statusOverlay = document.getElementById('status-overlay');
+        const resultMessage = document.getElementById('result-message');
+        
+        let stream = null;
+
+        // Initialize Camera
+        btnStart.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 720, height: 960 } 
+                });
+                video.srcObject = stream;
+                btnStart.classList.add('hidden');
+                btnCapture.classList.remove('hidden');
+            } catch (err) {
+                console.error("Error accessing webcam:", err);
+                showResult('Gagal mengakses kamera. Pastikan izin kamera telah diberikan.', 'error');
+            }
+        });
+
+        // Capture and Upload
+        btnCapture.addEventListener('click', () => {
+            if (!stream) return;
+            
+            // Show loading
+            statusOverlay.classList.remove('hidden');
+            resultMessage.classList.add('hidden');
+            
+            // Set canvas size to video size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw video frame to canvas
+            const context = canvas.getContext('2d');
+            // Mirror the context so the picture isn't reversed (since video is mirrored via CSS)
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to base64
+            const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Send to server
+            fetch('/face/enroll', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json'
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({ image: base64Image })
+                body: JSON.stringify({ image: imageBase64 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusOverlay.classList.add('hidden');
+                if (data.success) {
+                    showResult(data.message, 'success');
+                    // Stop camera after success
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                    btnStart.textContent = 'Daftar Ulang';
+                    btnStart.classList.remove('hidden');
+                    btnCapture.classList.add('hidden');
+                } else {
+                    showResult(data.message || 'Gagal mendaftarkan wajah', 'error');
+                }
+            })
+            .catch(error => {
+                statusOverlay.classList.add('hidden');
+                showResult('Terjadi kesalahan jaringan atau server.', 'error');
+                console.error('Error:', error);
             });
+        });
 
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                showToast('Berhasil', result.message, 'success');
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 2000);
-            } else {
-                showToast('Gagal', result.message || 'Terjadi kesalahan saat pendaftaran.', 'error');
-                captureBtn.disabled = false;
-                captureBtn.innerHTML = originalText;
-            }
-        } catch (error) {
-            console.error('Error submitting face:', error);
-            showToast('Error Koneksi', 'Tidak dapat terhubung ke server.', 'error');
-            captureBtn.disabled = false;
-            captureBtn.innerHTML = originalText;
+        function showResult(message, type) {
+            resultMessage.textContent = message;
+            resultMessage.className = 'mt-6 p-4 rounded-xl text-sm font-medium ' + 
+                (type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20');
+            resultMessage.classList.remove('hidden');
         }
     });
-
-    function showToast(title, message, type) {
-        const toast = document.getElementById('toast');
-        const iconContainer = document.getElementById('toast-icon-container');
-        const icon = document.getElementById('toast-icon');
-        const titleEl = document.getElementById('toast-title');
-        const msgEl = document.getElementById('toast-message');
-
-        titleEl.textContent = title;
-        msgEl.textContent = message;
-
-        if(type === 'success') {
-            iconContainer.className = 'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-success';
-            icon.textContent = 'check';
-        } else {
-            iconContainer.className = 'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-error';
-            icon.textContent = 'warning';
-        }
-
-        toast.classList.remove('translate-x-[150%]', 'opacity-0');
-        
-        setTimeout(() => {
-            toast.classList.add('translate-x-[150%]', 'opacity-0');
-        }, 4000);
-    }
 </script>
-</body>
-</html>
+@endpush
