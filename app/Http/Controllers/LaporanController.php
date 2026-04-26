@@ -147,7 +147,7 @@ class LaporanController extends Controller
         
         $pesertaQuery = DB::table('peserta_itikafs as p')
                           ->join('users as u', 'u.id', '=', 'p.pengguna_id')
-                          ->where('p.jadwal_id', $jadwal_id);
+                          ->where('p.jadwal_itikaf_id', $jadwal_id);
 
         $absensiQuery = DB::table('absensi_itikafs as a')
                           ->join('users as u', 'u.id', '=', 'a.pengguna_id')

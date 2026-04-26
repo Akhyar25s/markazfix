@@ -17,8 +17,7 @@ class PesertaItikafController extends Controller
     public function index()
     {
         // Tampilkan semua jadwal yang statusnya 'dijadwalkan' atau 'berlangsung'
-        $jadwals = JadwalItikaf::with('mahallah')
-                    ->whereIn('status', ['dijadwalkan', 'berlangsung'])
+        $jadwals = JadwalItikaf::whereIn('status', ['dijadwalkan', 'berlangsung'])
                     ->orderBy('tanggal_mulai', 'asc')
                     ->get();
                     
@@ -40,7 +39,7 @@ class PesertaItikafController extends Controller
                         ->get();
 
         // Ambil ID anggota yang sudah terdaftar di jadwal ini (untuk semua wilayah, agar tidak double register)
-        $pesertaTerdaftar = PesertaItikaf::where('jadwal_id', $jadwal_id)->pluck('pengguna_id')->toArray();
+        $pesertaTerdaftar = PesertaItikaf::where('jadwal_itikaf_id', $jadwal_id)->pluck('pengguna_id')->toArray();
 
         return view('peserta.create', compact('jadwal', 'anggotas', 'pesertaTerdaftar'));
     }
@@ -70,13 +69,13 @@ class PesertaItikafController extends Controller
                 if (!$anggota) continue; // Skip jika mencoba mendaftarkan user wilayah lain
 
                 // Cek apakah sudah terdaftar
-                $exists = PesertaItikaf::where('jadwal_id', $jadwal_id)
+                $exists = PesertaItikaf::where('jadwal_itikaf_id', $jadwal_id)
                                        ->where('pengguna_id', $pengguna_id)
                                        ->exists();
                 
                 if (!$exists) {
                     PesertaItikaf::create([
-                        'jadwal_id' => $jadwal_id,
+                        'jadwal_itikaf_id' => $jadwal_id,
                         'pengguna_id' => $pengguna_id,
                         'status_pendaftaran' => 'disetujui'
                     ]);

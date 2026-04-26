@@ -31,6 +31,7 @@ class JadwalItikaf extends Model
 
     public function pesertas()
     {
-        return $this->hasMany(PesertaItikaf::class);
+        // Gunakan foreign key yang benar: jadwal_itikaf_id
+        return $this->hasMany(PesertaItikaf::class, 'jadwal_itikaf_id');
     }
 }
