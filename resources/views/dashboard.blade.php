@@ -212,6 +212,7 @@
 @push('styles')
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <style>
     /* Leaflet popup customization to match glassmorphism theme */
     .leaflet-popup-content-wrapper {
@@ -251,10 +252,7 @@
         background: rgba(var(--destructive), 0.1);
     }
     
-    /* Dark mode map tiles (CSS filter approach) */
-    .dark .leaflet-tile {
-        filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
-    }
+    /* Removed dark mode map tiles filter for natural satellite view */
     
     .leaflet-control-zoom a {
         background-color: rgba(var(--card), 0.9) !important;
@@ -271,26 +269,22 @@
 @push('scripts')
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="{{ asset('js/map-utils.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize map, centered on Indonesia
-        var map = L.map('mahallah-map').setView([-2.5489, 118.0149], 5);
+        // Initialize map using Utility, centered on Indonesia
+        const map = MarkazMap.init('mahallah-map', [-2.5489, 118.0149], 5);
 
-        // Add OpenStreetMap tile layer
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
-            subdomains: 'abcd',
-            maxZoom: 20
+        // Add Search Control
+        L.Control.geocoder({
+            defaultMarkGeocode: true,
+            placeholder: "Cari lokasi atau alamat...",
+            errorMessage: "Lokasi tidak ditemukan."
         }).addTo(map);
 
-        // Custom icon for Mahallah
-        var mahallahIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: `<div class="bg-primary text-primary-foreground w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-primary/40 border-2 border-background transform transition-transform duration-300 hover:scale-110"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>`,
-            iconSize: [40, 40],
-            iconAnchor: [20, 40],
-            popupAnchor: [0, -40]
-        });
+        // Use custom icon from Utility
+        const mahallahIcon = MarkazMap.createIcon('bg-primary', `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>`);
 
         var markersGroup = L.featureGroup();
         var filterSelect = document.getElementById('wilayah-filter');

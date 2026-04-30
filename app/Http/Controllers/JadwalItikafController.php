@@ -53,6 +53,8 @@ class JadwalItikafController extends Controller
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'nama_lokasi' => 'required|string|max:150',
             'radius_meter' => 'required|integer|min:1',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         JadwalItikaf::create([
@@ -62,6 +64,8 @@ class JadwalItikafController extends Controller
             'tanggal_selesai' => $request->tanggal_selesai,
             'nama_lokasi' => $request->nama_lokasi,
             'radius_meter' => $request->radius_meter,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
             'dibuat_oleh' => Auth::id(),
             'status' => 'dijadwalkan',
         ]);
@@ -98,6 +102,8 @@ class JadwalItikafController extends Controller
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'nama_lokasi' => 'required|string|max:150',
             'radius_meter' => 'required|integer|min:1',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
         $jadwal->update([
@@ -107,6 +113,8 @@ class JadwalItikafController extends Controller
             'tanggal_selesai' => $request->tanggal_selesai,
             'nama_lokasi' => $request->nama_lokasi,
             'radius_meter' => $request->radius_meter,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
 
         return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil diperbarui!');
