@@ -2,6 +2,15 @@
 
 @section('title', 'Buat Jadwal Baru')
 
+@push('styles')
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<style>
+    #map { height: 400px; border-radius: 0.75rem; }
+    .geocoder-control { z-index: 1000; }
+</style>
+@endpush
+
 @section('content')
 <div class="max-w-3xl mx-auto space-y-6 animate-fade-in">
     <div class="flex items-center gap-4">
@@ -64,7 +73,10 @@
                     <x-select id="nama_lokasi" name="nama_lokasi" required>
                         <option value="">-- Pilih Lokasi --</option>
                         @foreach($mahallahs as $mahallah)
-                            <option value="{{ $mahallah->nama_mahallah }}" {{ old('nama_lokasi') == $mahallah->nama_mahallah ? 'selected' : '' }}>
+                            <option value="{{ $mahallah->nama_mahallah }}" 
+                                    data-lat="{{ $mahallah->latitude }}" 
+                                    data-lng="{{ $mahallah->longitude }}"
+                                    {{ old('nama_lokasi') == $mahallah->nama_mahallah ? 'selected' : '' }}>
                                 {{ $mahallah->nama_mahallah }}
                             </option>
                         @endforeach
@@ -80,6 +92,27 @@
                     @error('radius_meter')
                         <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
                     @enderror
+                </div>
+            </div>
+
+            <!-- Map Configuration Section -->
+            <div class="space-y-3">
+                <x-label>Konfigurasi Geofencing <span class="text-red-500">*</span></x-label>
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-xs text-muted-foreground">Tentukan titik koordinat presensi. Lokasi akan otomatis terisi saat Mahallah dipilih.</p>
+                </div>
+                
+                <div id="map" class="border border-border shadow-inner"></div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <x-label for="latitude" class="text-xs">Latitude</x-label>
+                        <x-input id="latitude" name="latitude" type="text" value="{{ old('latitude') }}" readonly class="bg-muted text-xs h-8" />
+                    </div>
+                    <div class="space-y-1">
+                        <x-label for="longitude" class="text-xs">Longitude</x-label>
+                        <x-input id="longitude" name="longitude" type="text" value="{{ old('longitude') }}" readonly class="bg-muted text-xs h-8" />
+                    </div>
                 </div>
             </div>
 
@@ -101,3 +134,101 @@
     </x-card>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<script src="{{ asset('js/map-utils.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const defaultLat = -2.5489;
+        const defaultLng = 118.0149;
+        const initialLat = document.getElementById('latitude').value || defaultLat;
+        const initialLng = document.getElementById('longitude').value || defaultLng;
+        const initialZoom = document.getElementById('latitude').value ? 16 : 5;
+
+        // Initialize Map using Utility
+        const map = MarkazMap.init('map', [initialLat, initialLng], initialZoom);
+
+        let marker = null;
+        let circle = null;
+        const customIcon = MarkazMap.createIcon('bg-primary');
+
+        if (document.getElementById('latitude').value && document.getElementById('longitude').value) {
+            updateMap(parseFloat(initialLat), parseFloat(initialLng));
+        }
+
+        function updateMap(lat, lng) {
+            if (marker) {
+                marker.setLatLng([lat, lng]);
+            } else {
+                marker = L.marker([lat, lng], { 
+                    draggable: true,
+                    icon: customIcon
+                }).addTo(map);
+                
+                marker.on('dragend', function(e) {
+                    const pos = marker.getLatLng();
+                    updateInputs(pos.lat, pos.lng);
+                    updateCircle(pos.lat, pos.lng);
+                });
+            }
+
+            updateCircle(lat, lng);
+            map.setView([lat, lng], map.getZoom() < 16 ? 16 : map.getZoom());
+            updateInputs(lat, lng);
+        }
+
+        function updateCircle(lat, lng) {
+            const radius = parseInt(document.getElementById('radius_meter').value) || 100;
+            if (circle) {
+                circle.setLatLng([lat, lng]);
+                circle.setRadius(radius);
+            } else {
+                circle = MarkazMap.createGeofence([lat, lng], radius).addTo(map);
+            }
+        }
+
+        function updateInputs(lat, lng) {
+            document.getElementById('latitude').value = lat.toFixed(8);
+            document.getElementById('longitude').value = lng.toFixed(8);
+        }
+
+        // Listen for mahallah selection
+        document.getElementById('nama_lokasi').addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            const lat = selected.getAttribute('data-lat');
+            const lng = selected.getAttribute('data-lng');
+
+            if (lat && lng) {
+                updateMap(parseFloat(lat), parseFloat(lng));
+            }
+        });
+
+        // Listen for radius changes
+        document.getElementById('radius_meter').addEventListener('input', function() {
+            const lat = document.getElementById('latitude').value;
+            const lng = document.getElementById('longitude').value;
+            if (lat && lng) {
+                updateCircle(parseFloat(lat), parseFloat(lng));
+            }
+        });
+
+        // Map Click
+        map.on('click', function(e) {
+            updateMap(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Add Geocoder
+        L.Control.geocoder({
+            defaultMarkGeocode: false,
+            placeholder: "Cari lokasi...",
+        })
+        .on('markgeocode', function(e) {
+            const latlng = e.geocode.center;
+            updateMap(latlng.lat, latlng.lng);
+        })
+        .addTo(map);
+    });
+</script>
+@endpush

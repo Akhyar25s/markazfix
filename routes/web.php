@@ -9,6 +9,7 @@ use App\Http\Controllers\MahallahController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\FaceRecognitionController;
 
+
 Route::get('/', function () {
     return view('welcome');
 });
