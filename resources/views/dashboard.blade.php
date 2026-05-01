@@ -19,11 +19,10 @@
                 <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
-                <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">+12%</x-badge>
             </div>
             <div>
                 <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Anggota</div>
-                <div class="text-3xl font-black text-foreground">12,450</div>
+                <div class="text-3xl font-black text-foreground">{{ number_format($totalAnggota) }}</div>
             </div>
         </x-card>
 
@@ -37,8 +36,8 @@
             </div>
             <div>
                 <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">I'tikaf Berjalan</div>
-                <div class="text-3xl font-black text-foreground">8</div>
-                <div class="text-xs text-muted-foreground mt-1">Di 5 Wilayah</div>
+                <div class="text-3xl font-black text-foreground">{{ $itikafBerjalan }}</div>
+                <div class="text-xs text-muted-foreground mt-1">Di {{ $jumlahWilayah }} Wilayah</div>
             </div>
         </x-card>
 
@@ -52,8 +51,8 @@
                 </div>
             </div>
             <div>
-                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Menunggu Approval</div>
-                <div class="text-3xl font-black text-red-500">24</div>
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Menunggu Pelaksanaan</div>
+                <div class="text-3xl font-black text-red-500">{{ $menungguPelaksanaan }}</div>
             </div>
         </x-card>
 
@@ -63,15 +62,15 @@
             <div class="flex flex-col h-full justify-between relative z-10">
                 <div class="flex justify-between items-start">
                     <div>
-                        <div class="text-sm text-white/80 font-semibold uppercase tracking-wider mb-1">Target Kegiatan</div>
-                        <div class="text-4xl font-black">85%</div>
-                        <div class="text-xs text-white/80 mt-1">17/20 Terlaksana</div>
+                        <div class="text-sm text-white/80 font-semibold uppercase tracking-wider mb-1">Tingkat Kehadiran</div>
+                        <div class="text-4xl font-black">{{ $persentaseHadirTerakhir }}%</div>
+                        <div class="text-xs text-white/80 mt-1">Pada I'tikaf Terakhir</div>
                     </div>
                     <!-- Progress Ring -->
                     <div class="relative w-14 h-14 flex items-center justify-center">
                         <svg class="w-full h-full transform -rotate-90 drop-shadow-md" viewBox="0 0 36 36">
                             <path class="text-white/20" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
-                            <path class="text-white" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-width="4" stroke-linecap="round"></path>
+                            <path class="text-white" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="{{ $persentaseHadirTerakhir }}, 100" stroke-width="4" stroke-linecap="round"></path>
                         </svg>
                     </div>
                 </div>
@@ -79,38 +78,61 @@
         </x-card>
     </div>
 
-    <!-- Geospatial Dashboard Section -->
-    <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl p-0 overflow-hidden flex flex-col relative">
-        <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 z-0 pointer-events-none"></div>
-        <div class="relative z-10">
-            <div class="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30">
-                <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-inner">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
-                    </div>
-                    <div>
-                        <h2 class="font-bold text-xl tracking-tight">Peta Persebaran Mahallah</h2>
-                        <p class="text-sm text-muted-foreground">Lokasi geografis masjid/mahallah di seluruh wilayah.</p>
-                    </div>
-                </div>
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <select id="wilayah-filter" class="w-full sm:w-48 bg-background border border-input text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary block p-2.5 outline-none shadow-sm transition-all">
-                        <option value="">Semua Wilayah</option>
-                        <!-- Options can be populated dynamically -->
-                    </select>
+    <!-- Analytics & Map Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart Section -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl overflow-hidden flex flex-col relative h-[550px]">
+            <div class="p-6 border-b border-border bg-muted/30 flex justify-between items-center">
+                <h2 class="font-bold text-xl tracking-tight">Tren Kehadiran I'tikaf</h2>
+                <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-inner">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
                 </div>
             </div>
-            <div class="p-0 relative">
-                <div id="mahallah-map" class="w-full h-[500px] z-10 bg-slate-900/20"></div>
-                
-                <!-- Map loading overlay -->
-                <div id="map-loading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm transition-opacity duration-300">
-                    <div class="h-12 w-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin"></div>
-                    <p class="mt-4 font-medium text-primary animate-pulse">Memuat data lokasi...</p>
+            <div class="flex-1 p-6 relative flex items-center justify-center">
+                @if(count($chartLabels) > 0)
+                    <canvas id="attendanceChart" class="w-full h-full"></canvas>
+                @else
+                    <div class="text-center text-muted-foreground flex flex-col items-center gap-2">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-12 w-12 opacity-50"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        <p>Data I'tikaf belum cukup untuk menampilkan grafik.</p>
+                    </div>
+                @endif
+            </div>
+        </x-card>
+
+        <!-- Geospatial Dashboard Section -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl p-0 overflow-hidden flex flex-col relative h-[550px]">
+            <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 z-0 pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col h-full">
+                <div class="p-6 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-muted/30">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary shadow-inner">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-xl tracking-tight">Peta Persebaran Mahallah</h2>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <select id="wilayah-filter" class="w-full sm:w-48 bg-background border border-input text-foreground text-sm rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary block p-2.5 outline-none shadow-sm transition-all">
+                            <option value="">Semua Wilayah</option>
+                            <!-- Options can be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="p-0 relative flex-1">
+                    <div id="mahallah-map" class="w-full h-full z-10 bg-slate-900/20"></div>
+                    
+                    <!-- Map loading overlay -->
+                    <div id="map-loading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm transition-opacity duration-300">
+                        <div class="h-12 w-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin"></div>
+                        <p class="mt-4 font-medium text-primary animate-pulse">Memuat data lokasi...</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </x-card>
+        </x-card>
+    </div>
 
     <!-- Bottom Grid Layout -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -118,45 +140,31 @@
         <div class="lg:col-span-2">
             <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg h-full p-0 overflow-hidden">
                 <div class="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-                    <h2 class="font-bold text-lg">Antrean Persetujuan Laporan</h2>
-                    <a href="#" class="text-primary hover:text-primary/80 font-semibold text-sm flex items-center gap-1 transition-colors">
+                    <h2 class="font-bold text-lg">Riwayat Kegiatan Selesai</h2>
+                    <a href="{{ route('jadwal.index') }}" class="text-primary hover:text-primary/80 font-semibold text-sm flex items-center gap-1 transition-colors">
                         Lihat Semua <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
-                <x-table :headers="['Sesi I\'tikaf', 'Nama Amir', 'Wilayah', 'Status', 'Aksi']">
+                <x-table :headers="['Nama Kegiatan', 'Lokasi', 'Tanggal Selesai', 'Status', 'Aksi']">
+                    @forelse($riwayatKegiatan as $riwayat)
                     <tr class="border-b border-border transition-colors hover:bg-muted/50">
-                        <td class="p-4 align-middle font-medium text-foreground">Ramadhan 1445 H - Gel. 1</td>
-                        <td class="p-4 align-middle text-muted-foreground">Ahmad Faisal</td>
-                        <td class="p-4 align-middle text-muted-foreground">Jakarta Selatan</td>
+                        <td class="p-4 align-middle font-medium text-foreground">{{ $riwayat->nama_itikaf }}</td>
+                        <td class="p-4 align-middle text-muted-foreground">{{ $riwayat->nama_lokasi ?? '-' }}</td>
+                        <td class="p-4 align-middle text-muted-foreground">{{ \Carbon\Carbon::parse($riwayat->tanggal_selesai)->format('d M Y') }}</td>
                         <td class="p-4 align-middle">
-                            <x-badge variant="danger" class="bg-red-500/10 text-red-500 border-red-500/20">Menunggu Inti</x-badge>
+                            <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">Selesai</x-badge>
                         </td>
                         <td class="p-4 align-middle">
-                            <x-button variant="outline" class="h-8 px-3 text-xs">Review</x-button>
+                            <a href="{{ route('laporan.show', $riwayat->id) }}">
+                                <x-button variant="outline" class="h-8 px-3 text-xs">Laporan</x-button>
+                            </a>
                         </td>
                     </tr>
-                    <tr class="border-b border-border transition-colors hover:bg-muted/50">
-                        <td class="p-4 align-middle font-medium text-foreground">Akhir Pekan - Safar</td>
-                        <td class="p-4 align-middle text-muted-foreground">Budi Santoso</td>
-                        <td class="p-4 align-middle text-muted-foreground">Bandung Raya</td>
-                        <td class="p-4 align-middle">
-                            <x-badge variant="warning" class="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Menunggu Wilayah</x-badge>
-                        </td>
-                        <td class="p-4 align-middle">
-                            <x-button variant="outline" class="h-8 px-3 text-xs">Review</x-button>
-                        </td>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="p-4 text-center text-muted-foreground">Belum ada riwayat kegiatan selesai.</td>
                     </tr>
-                    <tr class="border-b border-border transition-colors hover:bg-muted/50">
-                        <td class="p-4 align-middle font-medium text-foreground">Persiapan Ramadhan</td>
-                        <td class="p-4 align-middle text-muted-foreground">Zainal Abidin</td>
-                        <td class="p-4 align-middle text-muted-foreground">Medan Utara</td>
-                        <td class="p-4 align-middle">
-                            <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">Disetujui</x-badge>
-                        </td>
-                        <td class="p-4 align-middle">
-                            <x-button variant="default" class="h-8 px-3 text-xs bg-muted text-muted-foreground hover:bg-muted/80">Lihat</x-button>
-                        </td>
-                    </tr>
+                    @endforelse
                 </x-table>
             </x-card>
         </div>
@@ -169,39 +177,30 @@
                 </x-slot>
                 
                 <div class="space-y-4 flex-1">
-                    <!-- Schedule Item 1 -->
+                    @forelse($jadwalMendatang as $jadwal)
+                    <!-- Schedule Item -->
                     <div class="flex gap-4 items-start p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer group">
                         <div class="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg w-14 h-14 flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">Okt</span>
-                            <span class="text-xl font-black leading-none mt-0.5">12</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('M') }}</span>
+                            <span class="text-xl font-black leading-none mt-0.5">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('d') }}</span>
                         </div>
                         <div class="flex flex-col gap-1">
-                            <h4 class="font-semibold text-foreground group-hover:text-primary transition-colors">I'tikaf Akbar Jabar</h4>
+                            <h4 class="font-semibold text-foreground group-hover:text-primary transition-colors">{{ $jadwal->nama_itikaf }}</h4>
                             <p class="text-sm text-muted-foreground flex items-center gap-1">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                Masjid Raya Bandung
+                                {{ $jadwal->nama_lokasi ?? '-' }}
                             </p>
                         </div>
                     </div>
-                    
-                    <!-- Schedule Item 2 -->
-                    <div class="flex gap-4 items-start p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer group">
-                        <div class="flex flex-col items-center justify-center bg-accent text-accent-foreground rounded-lg w-14 h-14 flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">Okt</span>
-                            <span class="text-xl font-black leading-none mt-0.5">19</span>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <h4 class="font-semibold text-foreground group-hover:text-accent transition-colors">Pembekalan Amir</h4>
-                            <p class="text-sm text-muted-foreground flex items-center gap-1">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                Islamic Center Jakarta
-                            </p>
-                        </div>
-                    </div>
+                    @empty
+                    <p class="text-muted-foreground text-center text-sm py-4">Tidak ada jadwal mendatang.</p>
+                    @endforelse
                 </div>
                 
                 <div class="mt-6 pt-4 border-t border-border">
-                    <x-button variant="outline" class="w-full">Lihat Kalender Lengkap</x-button>
+                    <a href="{{ route('jadwal.index') }}">
+                        <x-button variant="outline" class="w-full">Lihat Semua Jadwal</x-button>
+                    </a>
                 </div>
             </x-card>
         </div>
@@ -267,12 +266,105 @@
 @endpush
 
 @push('scripts')
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <script src="{{ asset('js/map-utils.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // ==========================================
+        // CHART.JS INITIALIZATION
+        // ==========================================
+        @if(count($chartLabels) > 0)
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        
+        // Define colors
+        const primaryColor = 'rgba(22, 163, 74, 0.8)';
+        const primaryColorBorder = 'rgba(22, 163, 74, 1)';
+        const secondaryColor = 'rgba(217, 119, 6, 0.8)';
+        const secondaryColorBorder = 'rgba(217, 119, 6, 1)';
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @json($chartLabels),
+                datasets: [
+                    {
+                        label: 'Hadir',
+                        data: @json($chartHadir),
+                        backgroundColor: primaryColor,
+                        borderColor: primaryColorBorder,
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'Tidak Hadir',
+                        data: @json($chartTidakHadir),
+                        backgroundColor: secondaryColor,
+                        borderColor: secondaryColorBorder,
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: "'Outfit', sans-serif",
+                                weight: '500'
+                            },
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { family: "'Outfit', sans-serif", size: 14 },
+                        bodyFont: { family: "'Outfit', sans-serif", size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { display: false },
+                        ticks: { font: { family: "'Outfit', sans-serif" } }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { family: "'Outfit', sans-serif" },
+                            stepSize: 1
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+            }
+        });
+        @endif
+
+        // ==========================================
+        // LEAFLET MAP INITIALIZATION
+        // ==========================================
         // Initialize map using Utility, centered on Indonesia
         const map = MarkazMap.init('mahallah-map', [-2.5489, 118.0149], 5);
 

@@ -25,9 +25,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard (semua role)
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // ============================================================
     // PENGURUS INTI ONLY
