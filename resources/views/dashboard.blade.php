@@ -121,8 +121,8 @@
                         </select>
                     </div>
                 </div>
-                <div class="p-0 relative flex-1">
-                    <div id="mahallah-map" class="w-full h-full z-10 bg-slate-900/20"></div>
+                <div class="p-0 relative flex-1 min-h-0">
+                    <div id="mahallah-map" style="height: 430px; width: 100%;" class="z-10 bg-slate-900/20"></div>
                     
                     <!-- Map loading overlay -->
                     <div id="map-loading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-background/50 backdrop-blur-sm transition-opacity duration-300">
@@ -365,8 +365,9 @@
         // ==========================================
         // LEAFLET MAP INITIALIZATION
         // ==========================================
-        // Initialize map using Utility, centered on Indonesia
-        const map = MarkazMap.init('mahallah-map', [-2.5489, 118.0149], 5);
+        const map = MarkazMap.init('mahallah-map', [-3.3194, 114.5903], 11); // Pusat Banjarmasin
+        // Paksa Leaflet hitung ulang ukuran setelah render
+        setTimeout(() => map.invalidateSize(), 300);
 
         // Add Search Control
         L.Control.geocoder({
