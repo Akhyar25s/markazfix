@@ -420,40 +420,28 @@
                     markersGroup.clearLayers();
                     
                     dataToRender.forEach(function(mahallah) {
-                        var statusColor = mahallah.status.toLowerCase() === 'aktif' 
-                            ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
-                            : 'bg-red-500/10 text-red-500 border border-red-500/20';
+                        var statusBg  = mahallah.status.toLowerCase() === 'aktif' ? '#dcfce7' : '#fee2e2';
+                        var statusClr = mahallah.status.toLowerCase() === 'aktif' ? '#16a34a' : '#dc2626';
                             
                         var popupContent = `
-                            <div class="p-5 min-w-[240px] font-sans">
-                                <div class="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-                                    <h3 class="font-bold text-lg text-foreground tracking-tight">${mahallah.name}</h3>
-                                    <span class="${statusColor} text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">${mahallah.status}</span>
+                            <div style="font-family: sans-serif; min-width: 220px; padding: 4px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:10px; border-bottom: 1px solid #e5e7eb;">
+                                    <h3 style="font-weight:700; font-size:15px; color:#111827; margin:0;">${mahallah.name}</h3>
+                                    <span style="background:${statusBg}; color:${statusClr}; font-size:10px; padding:2px 8px; border-radius:9999px; font-weight:700; text-transform:uppercase;">${mahallah.status}</span>
                                 </div>
-                                <div class="space-y-2.5">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-muted-foreground font-medium uppercase tracking-wider">Wilayah</p>
-                                            <p class="text-sm font-semibold text-foreground">${mahallah.wilayah}</p>
-                                        </div>
+                                <div style="display:flex; flex-direction:column; gap:10px;">
+                                    <div>
+                                        <p style="font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 2px;">🗺️ Wilayah</p>
+                                        <p style="font-size:13px; color:#1f2937; font-weight:600; margin:0;">${mahallah.wilayah}</p>
                                     </div>
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-muted-foreground font-medium uppercase tracking-wider">Anggota</p>
-                                            <p class="text-sm font-semibold text-foreground">${mahallah.members} Jamaah</p>
-                                        </div>
+                                    <div>
+                                        <p style="font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 2px;">👥 Anggota</p>
+                                        <p style="font-size:13px; color:#1f2937; font-weight:600; margin:0;">${mahallah.members} Jamaah</p>
                                     </div>
                                 </div>
-                                <div class="mt-5 pt-3 border-t border-border/50">
-                                    <a href="/mahallah/${mahallah.id}" class="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors py-2 rounded-lg text-sm font-semibold shadow-md shadow-primary/20">
-                                        Lihat Detail
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                <div style="margin-top:12px; padding-top:10px; border-top: 1px solid #e5e7eb;">
+                                    <a href="/mahallah/${mahallah.id}" style="display:block; text-align:center; background:#16a34a; color:white; padding:8px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">
+                                        Lihat Detail →
                                     </a>
                                 </div>
                             </div>
