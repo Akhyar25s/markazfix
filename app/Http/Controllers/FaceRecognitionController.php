@@ -164,7 +164,7 @@ class FaceRecognitionController extends Controller
         // ============================================================
         // STEP 4: CEK APAKAH PESERTA TERDAFTAR UNTUK JADWAL INI
         // ============================================================
-        $isPeserta = PesertaItikaf::where('jadwal_id', $jadwal->id)
+        $isPeserta = PesertaItikaf::where('jadwal_itikaf_id', $jadwal->id)
                         ->where('pengguna_id', $peserta->id)
                         ->exists();
 
