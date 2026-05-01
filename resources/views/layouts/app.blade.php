@@ -120,21 +120,80 @@
                 <span class="text-sm font-semibold text-foreground/80 tracking-wide">Sistem Informasi Manajemen Organisasi</span>
             </div>
             
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4 sm:gap-6">
                 @auth
-                <div class="text-right hidden sm:block">
+                <!-- Notification Bell -->
+                @php
+                    $activeItikafs = \App\Models\JadwalItikaf::where('status', 'berlangsung')->get();
+                @endphp
+                <div class="relative" x-data="{ notifOpen: false }">
+                    <button @click="notifOpen = !notifOpen" @click.away="notifOpen = false" class="relative p-2 text-muted-foreground hover:text-primary transition-colors focus:outline-none">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        @if($activeItikafs->count() > 0)
+                            <span class="absolute top-1 right-1 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                            </span>
+                        @endif
+                    </button>
+
+                    <!-- Dropdown -->
+                    <div x-show="notifOpen" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                         class="absolute right-0 mt-3 w-80 bg-white/90 backdrop-blur-xl border border-border rounded-2xl shadow-xl overflow-hidden z-50 origin-top-right hidden"
+                         :class="{ 'hidden': !notifOpen }">
+                        <div class="p-4 border-b border-border bg-muted/30">
+                            <h3 class="font-bold text-sm text-foreground">Notifikasi</h3>
+                        </div>
+                        <div class="max-h-80 overflow-y-auto">
+                            @forelse($activeItikafs as $notif)
+                            <a href="{{ route('dashboard') }}" class="block p-4 border-b border-border/50 hover:bg-primary/5 transition-colors">
+                                <div class="flex items-start gap-3">
+                                    <div class="h-8 w-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-600 flex-shrink-0 mt-0.5">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-semibold text-foreground">I'tikaf Berlangsung!</p>
+                                        <p class="text-xs text-muted-foreground mt-1 line-clamp-2">Kegiatan <span class="font-semibold">{{ $notif->nama_itikaf }}</span> saat ini sedang berlangsung. Harap segera instruksikan jamaah untuk presensi.</p>
+                                        <p class="text-[10px] text-primary font-medium mt-2">{{ \Carbon\Carbon::parse($notif->updated_at)->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+                            </a>
+                            @empty
+                            <div class="p-6 text-center text-muted-foreground">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-10 w-10 mx-auto opacity-20 mb-2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                <p class="text-sm">Tidak ada notifikasi baru.</p>
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Profile -->
+                <div class="text-right hidden sm:block border-l border-border pl-4">
                     <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
                     <div class="text-xs font-medium text-secondary capitalize">{{ str_replace('_', ' ', Auth::user()->role) }}</div>
                 </div>
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 shadow-sm">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 shadow-sm relative group cursor-pointer">
                     <span class="font-bold text-primary">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                    <!-- Simple dropdown for logout on hover -->
+                    <div class="absolute right-0 top-12 w-48 bg-white border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <form method="POST" action="{{ route('logout') }}" class="p-2">
+                            @csrf
+                            <button type="submit" class="w-full text-left px-4 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                Keluar Aplikasi
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                <form method="POST" action="{{ route('logout') }}" class="ml-2">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100 shadow-sm">
-                        Keluar
-                    </button>
-                </form>
                 @endauth
             </div>
         </header>
