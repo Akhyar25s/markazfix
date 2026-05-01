@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Services\FaceRecognitionService;
-use App\Services\GeofencingService;
 use App\Models\JadwalItikaf;
 use App\Models\PesertaItikaf;
 use App\Models\PendaftaranWajah;
@@ -14,63 +12,77 @@ use Carbon\Carbon;
 
 class FaceRecognitionController extends Controller
 {
-    protected $faceService;
-    protected $geofencingService;
-
-    public function __construct(FaceRecognitionService $faceService, GeofencingService $geofencingService)
-    {
-        $this->faceService       = $faceService;
-        $this->geofencingService = $geofencingService;
-    }
-
     /**
      * Show the face enrollment view
      */
     public function showEnrollmentForm()
     {
         $user = Auth::user();
-
         $isRegistered = PendaftaranWajah::where('pengguna_id', $user->id)
                             ->where('status', 'aktif')
+                            ->whereNotNull('face_descriptor')
                             ->exists();
-
         return view('face.enroll', compact('user', 'isRegistered'));
     }
 
     /**
-     * Handle face enrollment submission
+     * Save face descriptor from face-api.js (client-side)
      */
     public function enroll(Request $request)
     {
         $request->validate([
-            'image' => 'required|string',
+            'face_descriptor' => 'required|string',
         ]);
 
-        $user        = Auth::user();
-        $imageBase64 = $request->input('image');
+        $user = Auth::user();
 
-        $result = $this->faceService->enrollFace($user, $imageBase64);
+        // Simpan descriptor ke database
+        PendaftaranWajah::updateOrCreate(
+            ['pengguna_id' => $user->id],
+            [
+                'face_descriptor'   => $request->face_descriptor,
+                'aws_face_id'       => null,
+                'aws_collection_id' => null,
+                'status'            => 'aktif',
+                'terdaftar_pada'    => now(),
+            ]
+        );
 
-        if ($result['success']) {
-            return response()->json(['success' => true, 'message' => $result['message']]);
-        }
-
-        return response()->json(['success' => false, 'message' => $result['message']], 400);
+        return response()->json([
+            'success' => true,
+            'message' => 'Wajah berhasil didaftarkan! Kamu sekarang bisa melakukan presensi dengan wajah.',
+        ]);
     }
 
     /**
-     * Show the face verification (absensi) view for a specific jadwal
+     * API: Return all face descriptors for client-side matching
+     */
+    public function getFaceDescriptors()
+    {
+        $descriptors = PendaftaranWajah::where('status', 'aktif')
+            ->whereNotNull('face_descriptor')
+            ->with('pengguna:id,name')
+            ->get()
+            ->map(fn($d) => [
+                'pengguna_id'     => $d->pengguna_id,
+                'nama'            => $d->pengguna->name ?? 'Unknown',
+                'face_descriptor' => json_decode($d->face_descriptor),
+            ]);
+
+        return response()->json($descriptors);
+    }
+
+    /**
+     * Show the face verification (absensi) view
      */
     public function showVerificationForm(Request $request)
     {
         $jadwalId = $request->query('jadwal_id');
-
-        // Cari jadwal yang sedang berlangsung atau dijadwalkan
         $jadwal = null;
+
         if ($jadwalId) {
             $jadwal = JadwalItikaf::find($jadwalId);
         } else {
-            // Jika tidak ada jadwal_id, coba cari jadwal yang sedang berlangsung
             $jadwal = JadwalItikaf::where('status', 'berlangsung')->latest()->first();
         }
 
@@ -83,87 +95,21 @@ class FaceRecognitionController extends Controller
     }
 
     /**
-     * Handle face verification with geofencing check
+     * Record attendance after client-side face match
      */
     public function verify(Request $request)
     {
         $request->validate([
-            'image'     => 'required|string',
-            'latitude'  => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'jadwal_id' => 'required|integer|exists:jadwal_itikafs,id',
+            'pengguna_id' => 'required|integer|exists:users,id',
+            'jadwal_id'   => 'required|integer|exists:jadwal_itikafs,id',
+            'latitude'    => 'nullable|numeric',
+            'longitude'   => 'nullable|numeric',
         ]);
 
-        $jadwal = JadwalItikaf::find($request->jadwal_id);
+        $jadwal  = JadwalItikaf::find($request->jadwal_id);
+        $peserta = \App\Models\User::find($request->pengguna_id);
 
-        // ============================================================
-        // STEP 1: VALIDASI GEOFENCING (Server-Side)
-        // ============================================================
-        if (is_null($jadwal->latitude) || is_null($jadwal->longitude)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Koordinat lokasi jadwal belum dikonfigurasi oleh admin.',
-            ], 422);
-        }
-
-        $geoCheck = $this->geofencingService->isWithinRadius(
-            userLat:   $request->latitude,
-            userLon:   $request->longitude,
-            centerLat: $jadwal->latitude,
-            centerLon: $jadwal->longitude,
-            radiusMeters: $jadwal->radius_meter,
-        );
-
-        if (!$geoCheck['is_within']) {
-            return response()->json([
-                'success'  => false,
-                'type'     => 'geofence_error',
-                'message'  => 'Anda berada di luar zona yang diizinkan. Jarak Anda: ' .
-                              round($geoCheck['distance']) . ' m (Batas: ' . $geoCheck['radius'] . ' m)',
-                'distance' => $geoCheck['distance'],
-            ], 403);
-        }
-
-        // ============================================================
-        // STEP 2: VALIDASI WAJAH (AWS Rekognition 1:N)
-        // ============================================================
-        $imageBase64 = $request->input('image');
-        $faceResult  = $this->faceService->verifyFace($imageBase64);
-
-        if (!$faceResult['success']) {
-            return response()->json([
-                'success' => false,
-                'type'    => 'face_error',
-                'message' => $faceResult['message'],
-            ], 400);
-        }
-
-        // ============================================================
-        // STEP 3: CARI USER BERDASARKAN FACE ID YANG DIKENALI
-        // ============================================================
-        $awsFaceId = $faceResult['face_id'] ?? null;
-        $pendaftaranWajah = null;
-
-        if ($awsFaceId) {
-            $pendaftaranWajah = PendaftaranWajah::where('aws_face_id', $awsFaceId)
-                                    ->where('status', 'aktif')
-                                    ->with('pengguna')
-                                    ->first();
-        }
-
-        if (!$pendaftaranWajah) {
-            return response()->json([
-                'success' => false,
-                'type'    => 'face_error',
-                'message' => 'Wajah dikenali, namun tidak ditemukan di database peserta terdaftar.',
-            ], 404);
-        }
-
-        $peserta = $pendaftaranWajah->pengguna;
-
-        // ============================================================
-        // STEP 4: CEK APAKAH PESERTA TERDAFTAR UNTUK JADWAL INI
-        // ============================================================
+        // Cek apakah peserta terdaftar di jadwal ini
         $isPeserta = PesertaItikaf::where('jadwal_itikaf_id', $jadwal->id)
                         ->where('pengguna_id', $peserta->id)
                         ->exists();
@@ -176,16 +122,12 @@ class FaceRecognitionController extends Controller
             ], 403);
         }
 
-        // ============================================================
-        // STEP 5: CATAT ABSENSI (cegah duplikasi dalam satu hari)
-        // ============================================================
-        $today = Carbon::today();
-
+        // Cegah duplikasi absensi hari ini
         $sudahAbsen = DB::table('absensi_itikafs')
                         ->where('jadwal_itikaf_id', $jadwal->id)
                         ->where('pengguna_id', $peserta->id)
                         ->where('status_absen', 'berhasil')
-                        ->whereDate('waktu_absen', $today)
+                        ->whereDate('waktu_absen', Carbon::today())
                         ->exists();
 
         if ($sudahAbsen) {
@@ -197,14 +139,13 @@ class FaceRecognitionController extends Controller
             ]);
         }
 
+        // Catat absensi
         DB::table('absensi_itikafs')->insert([
             'jadwal_itikaf_id' => $jadwal->id,
             'pengguna_id'      => $peserta->id,
             'waktu_absen'      => Carbon::now(),
             'latitude_aktual'  => $request->latitude,
             'longitude_aktual' => $request->longitude,
-            'jarak_meter'      => (int) round($geoCheck['distance']),
-            'status_gps'       => 'valid',
             'status_wajah'     => 'dikenali',
             'status_absen'     => 'berhasil',
             'created_at'       => Carbon::now(),

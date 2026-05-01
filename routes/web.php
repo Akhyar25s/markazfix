@@ -66,6 +66,9 @@ Route::middleware(['auth'])->group(function () {
         // API peta (dipakai dashboard)
         Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
 
+        // API face descriptors (dipakai client-side face-api.js)
+        Route::get('/api/face-descriptors', [FaceRecognitionController::class, 'getFaceDescriptors'])->name('face.descriptors');
+
         // Absensi Face Recognition
         Route::get('/face/verify', [FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');
         Route::post('/face/verify', [FaceRecognitionController::class, 'verify']);

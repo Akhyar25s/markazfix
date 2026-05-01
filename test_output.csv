@@ -1,0 +1,8 @@
+﻿"Laporan Absensi I'tikaf"
+Kegiatan,"I'tikaf Ramadhan Test"
+Lokasi,"Masjid An-Nur"
+Tanggal,"03 May 2026 s/d 04 May 2026"
+"Digenerate pada","01 May 2026 17:38"
+
+No,"Nama Peserta",Email,Mahallah/Wilayah,"Waktu Absen","Jarak (m)","Status GPS","Status Wajah","Status Absen"
+1,"Umar Anggota",umar@markaz.com,"Halaqah Wilayah 1","01 May 2026 17:24:08",15.5,valid,dikenali,berhasil
