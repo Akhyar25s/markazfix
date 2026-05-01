@@ -37,7 +37,7 @@ class LaporanController extends Controller
     }
 
     /**
-     * Export laporan ke PDF
+     * Preview laporan PDF di halaman baru untuk di-print
      */
     public function exportPdf($jadwal_id)
     {
@@ -45,22 +45,13 @@ class LaporanController extends Controller
         $absensi = $this->getAbsensiData($jadwal_id);
         $stats   = $this->getStats($jadwal_id, $jadwal);
 
-        $pdf = Pdf::loadView('laporan.pdf', compact('jadwal', 'absensi', 'stats'))
-                  ->setPaper('a4', 'portrait');
-
-        $safeName = \Illuminate\Support\Str::slug($jadwal->nama_itikaf, '_');
-        $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.pdf';
-
-        // Pastikan tidak ada spasi atau output kosong yang merusak file biner
-        if (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-
-        return $pdf->download($filename);
+        // Jangan gunakan DOMPDF untuk memaksa download, karena browser internal kadang bermasalah.
+        // Tampilkan view HTML dan panggil window.print() di view tersebut.
+        return view('laporan.pdf', compact('jadwal', 'absensi', 'stats'));
     }
 
     /**
-     * Export laporan ke Excel (.xls format with HTML structure)
+     * Preview laporan Excel di halaman baru
      */
     public function exportCsv($jadwal_id)
     {
@@ -68,20 +59,10 @@ class LaporanController extends Controller
         $absensi = $this->getAbsensiData($jadwal_id);
         $stats   = $this->getStats($jadwal_id, $jadwal);
 
-        $safeName = \Illuminate\Support\Str::slug($jadwal->nama_itikaf, '_');
-        $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.xls';
-
-        // Pastikan tidak ada spasi atau output kosong yang merusak file biner
-        if (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-
-        $headers = [
-            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        return response()->view('laporan.excel', compact('jadwal', 'absensi', 'stats'), 200, $headers);
+        // Jangan gunakan header attachment agar file terbuka di browser (sebagai halaman web)
+        // Ini sangat berguna jika user menggunakan browser internal IDE yang tidak mendukung download file biner dengan baik.
+        
+        return view('laporan.excel', compact('jadwal', 'absensi', 'stats'));
     }
 
     // ============================================================

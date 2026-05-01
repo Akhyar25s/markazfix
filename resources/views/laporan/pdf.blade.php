@@ -48,9 +48,24 @@
         /* Footer */
         .footer { padding: 16px 30px; background: #f8fafc; border-top: 1px solid #e2e8f0; font-size: 9px; color: #94a3b8; text-align: center; }
         .page-break { page-break-after: always; }
+        
+        /* Action Bar for Web View */
+        .action-bar { background: #f1f5f9; padding: 15px 30px; display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; }
+        .btn { padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 12px; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px;}
+        .btn-back { background: #64748b; color: white; }
+        .btn-print { background: #ef4444; color: white; }
+        @media print { .action-bar { display: none; } body { background: white; } }
     </style>
 </head>
 <body>
+
+    {{-- Action Bar (Only visible in browser, hidden when printing) --}}
+    <div class="action-bar">
+        <a href="{{ route('laporan.show', $jadwal->id) }}" class="btn btn-back">← Kembali</a>
+        <button onclick="window.print()" class="btn btn-print">
+            🖨️ Cetak / Save as PDF
+        </button>
+    </div>
 
     {{-- Header --}}
     <div class="header">
@@ -157,5 +172,13 @@
         Dokumen ini dibuat secara otomatis oleh Sistem Informasi Manajemen Organisasi MARKAZ &bull; Dicetak: {{ now()->format('d F Y H:i') }}
     </div>
 
+    <script>
+        // Otomatis buka dialog print saat halaman dimuat
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
 </body>
 </html>
