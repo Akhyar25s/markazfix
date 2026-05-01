@@ -376,8 +376,26 @@
             errorMessage: "Lokasi tidak ditemukan."
         }).addTo(map);
 
-        // Use custom icon from Utility
-        const mahallahIcon = MarkazMap.createIcon('bg-primary', `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>`);
+        // Use inline-styled icon (Tailwind classes don't apply inside Leaflet DOM)
+        const mahallahIcon = L.divIcon({
+            className: '',
+            html: `<div style="
+                background: #16a34a;
+                color: white;
+                width: 36px;
+                height: 36px;
+                border-radius: 50% 50% 50% 0;
+                transform: rotate(-45deg);
+                border: 3px solid white;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            "><span style="transform: rotate(45deg); font-size: 16px;">🕌</span></div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 36],
+            popupAnchor: [0, -38]
+        });
 
         var markersGroup = L.featureGroup();
         var filterSelect = document.getElementById('wilayah-filter');
