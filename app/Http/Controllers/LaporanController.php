@@ -48,7 +48,8 @@ class LaporanController extends Controller
         $pdf = Pdf::loadView('laporan.pdf', compact('jadwal', 'absensi', 'stats'))
                   ->setPaper('a4', 'portrait');
 
-        $filename = 'Laporan_Absensi_' . str_replace(' ', '_', $jadwal->nama_itikaf) . '_' . now()->format('Ymd') . '.pdf';
+        $safeName = \Illuminate\Support\Str::slug($jadwal->nama_itikaf, '_');
+        $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -61,7 +62,8 @@ class LaporanController extends Controller
         $jadwal  = JadwalItikaf::findOrFail($jadwal_id);
         $absensi = $this->getAbsensiData($jadwal_id);
 
-        $filename = 'Laporan_Absensi_' . str_replace(' ', '_', $jadwal->nama_itikaf) . '_' . now()->format('Ymd') . '.csv';
+        $safeName = \Illuminate\Support\Str::slug($jadwal->nama_itikaf, '_');
+        $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
