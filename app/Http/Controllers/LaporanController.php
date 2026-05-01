@@ -51,64 +51,37 @@ class LaporanController extends Controller
         $safeName = \Illuminate\Support\Str::slug($jadwal->nama_itikaf, '_');
         $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.pdf';
 
+        // Pastikan tidak ada spasi atau output kosong yang merusak file biner
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
         return $pdf->download($filename);
     }
 
     /**
-     * Export laporan ke CSV (bisa dibuka di Excel)
+     * Export laporan ke Excel (.xls format with HTML structure)
      */
     public function exportCsv($jadwal_id)
     {
         $jadwal  = JadwalItikaf::findOrFail($jadwal_id);
         $absensi = $this->getAbsensiData($jadwal_id);
+        $stats   = $this->getStats($jadwal_id, $jadwal);
 
         $safeName = \Illuminate\Support\Str::slug($jadwal->nama_itikaf, '_');
-        $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.csv';
+        $filename = 'Laporan_Absensi_' . $safeName . '_' . now()->format('Ymd') . '.xls';
+
+        // Pastikan tidak ada spasi atau output kosong yang merusak file biner
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function () use ($jadwal, $absensi) {
-            $handle = fopen('php://output', 'w');
-
-            // BOM untuk Excel agar UTF-8 terbaca dengan benar
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            // Header info
-            fputcsv($handle, ['Laporan Absensi I\'tikaf']);
-            fputcsv($handle, ['Kegiatan', $jadwal->nama_itikaf]);
-            if (Auth::user()->role === 'pengurus_wilayah') {
-                fputcsv($handle, ['Wilayah', Auth::user()->wilayah->nama_wilayah ?? 'Wilayah Anda']);
-            }
-            fputcsv($handle, ['Lokasi', $jadwal->nama_lokasi ?? '-']);
-            fputcsv($handle, ['Tanggal', Carbon::parse($jadwal->tanggal_mulai)->format('d M Y') . ' s/d ' . Carbon::parse($jadwal->tanggal_selesai)->format('d M Y')]);
-            fputcsv($handle, ['Digenerate pada', now()->format('d M Y H:i')]);
-            fputcsv($handle, []); 
-
-            // Header kolom
-            fputcsv($handle, ['No', 'Nama Peserta', 'Email', 'Mahallah/Wilayah', 'Waktu Absen', 'Jarak (m)', 'Status GPS', 'Status Wajah', 'Status Absen']);
-
-            // Data rows
-            foreach ($absensi as $i => $row) {
-                fputcsv($handle, [
-                    $i + 1,
-                    $row->pengguna_name,
-                    $row->pengguna_email,
-                    $row->wilayah_nama ?? '-',
-                    Carbon::parse($row->waktu_absen)->format('d M Y H:i:s'),
-                    $row->jarak_meter ?? '-',
-                    $row->status_gps ?? '-',
-                    $row->status_wajah ?? '-',
-                    $row->status_absen,
-                ]);
-            }
-
-            fclose($handle);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response()->view('laporan.excel', compact('jadwal', 'absensi', 'stats'), 200, $headers);
     }
 
     // ============================================================
