@@ -15,7 +15,43 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+
+        // LOGIKA KHUSUS ANGGOTA
+        if ($user->role === 'anggota') {
+            // 1. Status Pendaftaran Wajah
+            $isFaceRegistered = \App\Models\PendaftaranWajah::where('pengguna_id', $user->id)
+                                    ->where('status', 'aktif')
+                                    ->exists();
+
+            // 2. I'tikaf yang Sedang Diikuti (berlangsung atau akan datang)
+            $itikafAktif = JadwalItikaf::whereHas('pesertas', function($q) use ($user) {
+                $q->where('pengguna_id', $user->id);
+            })->whereIn('status', ['berlangsung', 'dijadwalkan'])
+            ->orderBy('tanggal_mulai', 'asc')
+            ->get();
+
+            // 3. Riwayat Absensi Saya
+            $riwayatAbsensi = AbsensiItikaf::where('pengguna_id', $user->id)
+                ->where('status_absen', 'berhasil')
+                ->with('jadwal')
+                ->orderBy('waktu_absen', 'desc')
+                ->take(5)
+                ->get();
+
+            // 4. Statistik Ringkasan
+            $totalIitkafDiikuti = PesertaItikaf::where('pengguna_id', $user->id)->count();
+            $totalKehadiran = AbsensiItikaf::where('pengguna_id', $user->id)->where('status_absen', 'berhasil')->count();
+
+            return view('dashboard', compact(
+                'isFaceRegistered',
+                'itikafAktif',
+                'riwayatAbsensi',
+                'totalIitkafDiikuti',
+                'totalKehadiran'
+            ));
+        }
         
+        // LOGIKA EXISTING (PENGURUS)
         // 1. Total Anggota
         if ($user->role === 'pengurus_wilayah') {
             $totalAnggota = User::where('wilayah_id', $user->wilayah_id)->count();

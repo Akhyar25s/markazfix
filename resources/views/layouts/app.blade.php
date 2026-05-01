@@ -109,7 +109,7 @@
         <div class="absolute bottom-0 left-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl -z-10 animate-blob" style="animation-delay: 4s;"></div>
 
         <!-- Navbar -->
-        <header class="flex h-20 shrink-0 items-center justify-between glass border-b border-primary/10 px-8 z-10">
+        <header class="flex h-20 shrink-0 items-center justify-between bg-white border-b border-primary/10 px-8 z-[1000] shadow-sm relative">
             <button @click="sidebarOpen = !sidebarOpen" class="text-muted-foreground hover:text-primary transition-colors md:hidden p-2 bg-white/50 rounded-lg">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -139,7 +139,7 @@
                         @endif
                     </button>
 
-                    <!-- Dropdown -->
+                    <!-- Dropdown Notifikasi -->
                     <div x-show="notifOpen" 
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 scale-95 translate-y-2"
@@ -147,8 +147,8 @@
                          x-transition:leave="transition ease-in duration-150"
                          x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                          x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-                         class="absolute right-0 mt-3 w-80 bg-white/90 backdrop-blur-xl border border-border rounded-2xl shadow-xl overflow-hidden z-50 origin-top-right hidden"
-                         :class="{ 'hidden': !notifOpen }">
+                         class="absolute right-0 mt-3 w-80 bg-white border border-border shadow-2xl rounded-2xl overflow-hidden z-[100] ring-1 ring-black/5"
+                         style="display: none;">
                         <div class="p-4 border-b border-border bg-muted/30">
                             <h3 class="font-bold text-sm text-foreground">Notifikasi</h3>
                         </div>
@@ -176,22 +176,46 @@
                     </div>
                 </div>
 
-                <!-- User Profile -->
-                <div class="text-right hidden sm:block border-l border-border pl-4">
-                    <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
-                    <div class="text-xs font-medium text-secondary capitalize">{{ str_replace('_', ' ', Auth::user()->role) }}</div>
-                </div>
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 shadow-sm relative group cursor-pointer">
-                    <span class="font-bold text-primary">{{ substr(Auth::user()->name, 0, 1) }}</span>
-                    <!-- Simple dropdown for logout on hover -->
-                    <div class="absolute right-0 top-12 w-48 bg-white border border-border rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                        <form method="POST" action="{{ route('logout') }}" class="p-2">
-                            @csrf
-                            <button type="submit" class="w-full text-left px-4 py-2 rounded-lg text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                Keluar Aplikasi
-                            </button>
-                        </form>
+                <!-- User Profile Dropdown -->
+                <div class="relative" x-data="{ profileOpen: false }">
+                    <button @click="profileOpen = !profileOpen" @click.away="profileOpen = false" class="flex items-center gap-3 focus:outline-none group">
+                        <div class="text-right hidden sm:block border-l border-border pl-4">
+                            <div class="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{{ Auth::user()->name }}</div>
+                            <div class="text-xs font-medium text-secondary capitalize">{{ str_replace('_', ' ', Auth::user()->role) }}</div>
+                        </div>
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center border-2 border-white shadow-md transition-transform group-hover:scale-105">
+                            <span class="font-bold text-white text-sm">{{ substr(Auth::user()->name, 0, 1) }}</span>
+                        </div>
+                        <svg class="h-4 w-4 text-muted-foreground transition-transform duration-200" :class="profileOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+
+                    <!-- Profile Menu -->
+                    <div x-show="profileOpen" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 scale-95 translate-y-2"
+                         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                         x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                         class="absolute right-0 mt-3 w-56 bg-white border border-border shadow-2xl rounded-2xl overflow-hidden z-[100] ring-1 ring-black/5"
+                         style="display: none;">
+                        
+                        <div class="p-4 border-b border-border bg-muted/20">
+                            <p class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Akun Saya</p>
+                            <p class="text-sm font-bold text-foreground truncate mt-1">{{ Auth::user()->email }}</p>
+                        </div>
+
+                        <div class="p-2">
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all flex items-center gap-3 group">
+                                    <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                    </div>
+                                    Keluar Aplikasi
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 @endauth

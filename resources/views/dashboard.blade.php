@@ -6,10 +6,135 @@
 <div class="space-y-8 animate-fade-in pb-8">
     <!-- Welcome Header -->
     <div class="flex flex-col gap-2">
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">Assalamu'alaikum, {{ Auth::user()->name ?? 'Admin' }}</h1>
-        <p class="text-lg text-muted-foreground">Berikut adalah ringkasan aktivitas dan laporan yang membutuhkan perhatian Anda hari ini.</p>
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">Assalamu'alaikum, {{ Auth::user()->name ?? 'Akhi' }}</h1>
+        <p class="text-lg text-muted-foreground">Berikut adalah ringkasan aktivitas dan status keanggotaan Anda hari ini.</p>
     </div>
 
+    @if(Auth::user()->role === 'anggota')
+    <!-- MEMBER DASHBOARD -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Stat: Pendaftaran Wajah -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 {{ $isFaceRegistered ? 'bg-green-500/10' : 'bg-red-500/10' }} rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-4">
+                <div class="h-12 w-12 rounded-full {{ $isFaceRegistered ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20' }} flex items-center justify-center border">
+                    @if($isFaceRegistered)
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    @else
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    @endif
+                </div>
+            </div>
+            <div>
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Status Wajah</div>
+                <div class="text-2xl font-black {{ $isFaceRegistered ? 'text-green-500' : 'text-red-500' }}">
+                    {{ $isFaceRegistered ? 'Sudah Terdaftar' : 'Belum Terdaftar' }}
+                </div>
+                <p class="text-xs text-muted-foreground mt-1">{{ $isFaceRegistered ? 'Identitas wajah Anda aman di sistem.' : 'Silakan hubungi Pengurus Wilayah untuk enrollment wajah.' }}</p>
+            </div>
+        </x-card>
+
+        <!-- Stat: I'tikaf Diikuti -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-4">
+                <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                </div>
+            </div>
+            <div>
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total I'tikaf Diikuti</div>
+                <div class="text-3xl font-black text-foreground">{{ $totalIitkafDiikuti }}</div>
+            </div>
+        </x-card>
+
+        <!-- Stat: Kehadiran -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 w-24 h-24 bg-accent/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="flex items-center justify-between mb-4">
+                <div class="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center text-accent border border-accent/20">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+            <div>
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Kehadiran</div>
+                <div class="text-3xl font-black text-foreground">{{ $totalKehadiran }}</div>
+            </div>
+        </x-card>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Section: I'tikaf Aktif Saya -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                <h2 class="font-bold text-lg">I'tikaf Aktif & Mendatang</h2>
+                <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded-md font-bold uppercase">{{ $itikafAktif->count() }} Jadwal</span>
+            </div>
+            <div class="p-6 space-y-4">
+                @forelse($itikafAktif as $jadwal)
+                <div class="flex gap-4 p-4 rounded-2xl bg-white/50 border border-border hover:border-primary/50 transition-all group">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent flex flex-col items-center justify-center text-white shadow-lg">
+                        <span class="text-[10px] font-bold uppercase">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('M') }}</span>
+                        <span class="text-xl font-black">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('d') }}</span>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-foreground group-hover:text-primary transition-colors">{{ $jadwal->nama_itikaf }}</h4>
+                            <x-badge class="{{ $jadwal->status == 'berlangsung' ? 'bg-blue-500/10 text-blue-500' : 'bg-amber-500/10 text-amber-500' }}">
+                                {{ ucfirst($jadwal->status) }}
+                            </x-badge>
+                        </div>
+                        <p class="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                            {{ $jadwal->nama_lokasi }}
+                        </p>
+                    </div>
+                </div>
+                @empty
+                <div class="text-center py-10 text-muted-foreground">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-12 w-12 mx-auto opacity-20 mb-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <p>Anda belum terdaftar di I'tikaf mendatang.</p>
+                </div>
+                @endforelse
+            </div>
+        </x-card>
+
+        <!-- Section: Riwayat Absensi -->
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                <h2 class="font-bold text-lg">Riwayat Kehadiran (Wajah)</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-border/50 text-muted-foreground bg-muted/10 text-left">
+                            <th class="p-4 font-semibold">I'tikaf</th>
+                            <th class="p-4 font-semibold text-center">Waktu Absen</th>
+                            <th class="p-4 font-semibold text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border/30">
+                        @forelse($riwayatAbsensi as $absensi)
+                        <tr class="hover:bg-muted/30 transition-colors">
+                            <td class="p-4 font-medium">{{ $absensi->jadwal->nama_itikaf }}</td>
+                            <td class="p-4 text-center text-muted-foreground">{{ \Carbon\Carbon::parse($absensi->waktu_absen)->format('d M, H:i') }}</td>
+                            <td class="p-4 text-center">
+                                <span class="bg-green-500/10 text-green-600 px-2 py-1 rounded text-[10px] font-bold uppercase border border-green-500/20">Hadir</span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" class="p-10 text-center text-muted-foreground">Belum ada riwayat kehadiran.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-card>
+    </div>
+
+    @else
+    <!-- ADMIN / PENGURUS DASHBOARD -->
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Stat Card 1 -->
@@ -205,6 +330,7 @@
             </x-card>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
@@ -279,7 +405,7 @@
         // ==========================================
         // CHART.JS INITIALIZATION
         // ==========================================
-        @if(count($chartLabels) > 0)
+        @if(isset($chartLabels) && count($chartLabels) > 0)
         const ctx = document.getElementById('attendanceChart').getContext('2d');
         
         // Define colors
@@ -360,11 +486,13 @@
                 },
             }
         });
+        });
         @endif
 
         // ==========================================
         // LEAFLET MAP INITIALIZATION
         // ==========================================
+        @if(Auth::user()->role !== 'anggota')
         const map = MarkazMap.init('mahallah-map', [-3.3194, 114.5903], 11); // Pusat Banjarmasin
         // Paksa Leaflet hitung ulang ukuran setelah render
         setTimeout(() => map.invalidateSize(), 300);
@@ -420,29 +548,49 @@
                     markersGroup.clearLayers();
                     
                     dataToRender.forEach(function(mahallah) {
-                        var statusBg  = mahallah.status.toLowerCase() === 'aktif' ? '#dcfce7' : '#fee2e2';
-                        var statusClr = mahallah.status.toLowerCase() === 'aktif' ? '#16a34a' : '#dc2626';
+                        var statusBg  = mahallah.status.toLowerCase() === 'aktif' ? '#bbf7d0' : '#fecaca';
+                        var statusClr = mahallah.status.toLowerCase() === 'aktif' ? '#15803d' : '#dc2626';
                             
                         var popupContent = `
-                            <div style="font-family: sans-serif; min-width: 220px; padding: 4px;">
-                                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:10px; border-bottom: 1px solid #e5e7eb;">
-                                    <h3 style="font-weight:700; font-size:15px; color:#111827; margin:0;">${mahallah.name}</h3>
-                                    <span style="background:${statusBg}; color:${statusClr}; font-size:10px; padding:2px 8px; border-radius:9999px; font-weight:700; text-transform:uppercase;">${mahallah.status}</span>
+                            <div style="
+                                font-family: 'Segoe UI', Arial, sans-serif;
+                                min-width: 230px;
+                                padding: 0;
+                                background: #ffffff;
+                                border-radius: 12px;
+                                overflow: hidden;
+                            ">
+                                <!-- Header -->
+                                <div style="background: linear-gradient(135deg, #15803d, #16a34a); padding: 14px 16px;">
+                                    <h3 style="font-weight:800; font-size:15px; color:#ffffff; margin:0 0 6px;">${mahallah.name}</h3>
+                                    <span style="background:${statusBg}; color:${statusClr}; font-size:10px; padding:2px 10px; border-radius:9999px; font-weight:700; text-transform:uppercase;">${mahallah.status}</span>
                                 </div>
-                                <div style="display:flex; flex-direction:column; gap:10px;">
+                                <!-- Body -->
+                                <div style="padding: 14px 16px; background: #ffffff; display:flex; flex-direction:column; gap:10px;">
                                     <div>
-                                        <p style="font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 2px;">🗺️ Wilayah</p>
-                                        <p style="font-size:13px; color:#1f2937; font-weight:600; margin:0;">${mahallah.wilayah}</p>
+                                        <p style="font-size:10px; color:#15803d; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 2px;">🗺️ Wilayah</p>
+                                        <p style="font-size:14px; color:#064e3b; font-weight:700; margin:0;">${mahallah.wilayah}</p>
                                     </div>
+                                    <div style="height:1px; background:#d1fae5;"></div>
                                     <div>
-                                        <p style="font-size:10px; color:#6b7280; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 2px;">👥 Anggota</p>
-                                        <p style="font-size:13px; color:#1f2937; font-weight:600; margin:0;">${mahallah.members} Jamaah</p>
+                                        <p style="font-size:10px; color:#15803d; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 2px;">👥 Anggota Terdaftar</p>
+                                        <p style="font-size:14px; color:#064e3b; font-weight:700; margin:0;">${mahallah.members} Jamaah</p>
                                     </div>
                                 </div>
-                                <div style="margin-top:12px; padding-top:10px; border-top: 1px solid #e5e7eb;">
-                                    <a href="/mahallah/${mahallah.id}" style="display:block; text-align:center; background:#16a34a; color:white; padding:8px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;">
-                                        Lihat Detail →
-                                    </a>
+                                <!-- Footer -->
+                                <div style="padding: 0 16px 14px;">
+                                    <a href="/mahallah/${mahallah.id}" style="
+                                        display:block;
+                                        text-align:center;
+                                        background: linear-gradient(135deg, #15803d, #16a34a);
+                                        color: white;
+                                        padding: 9px;
+                                        border-radius: 8px;
+                                        font-size: 13px;
+                                        font-weight: 700;
+                                        text-decoration: none;
+                                        letter-spacing: 0.03em;
+                                    ">Lihat Detail →</a>
                                 </div>
                             </div>
                         `;
@@ -489,6 +637,7 @@
                 console.error('Error fetching mahallah data:', error);
                 document.getElementById('map-loading').innerHTML = '<p class="text-red-500 font-medium">Gagal memuat data peta.</p>';
             });
+        @endif
     });
 </script>
 @endpush
