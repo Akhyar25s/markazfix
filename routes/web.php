@@ -8,6 +8,8 @@ use App\Http\Controllers\WilayahController;
 use App\Http\Controllers\MahallahController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\FaceRecognitionController;
+use App\Http\Controllers\AmirLaporanController;
+use App\Http\Controllers\PersetujuanLaporanController;
 
 
 Route::get('/', function () {
@@ -25,9 +27,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard (semua role)
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // ============================================================
     // PENGURUS INTI ONLY
@@ -55,6 +55,31 @@ Route::middleware(['auth'])->group(function () {
         // Pendaftaran Wajah (untuk mendaftarkan anggota wilayahnya)
         Route::get('/face/enroll', [FaceRecognitionController::class, 'showEnrollmentForm'])->name('face.enroll');
         Route::post('/face/enroll', [FaceRecognitionController::class, 'enroll']);
+    });
+
+    // ============================================================
+    // AMIR I'TIKAF — Semua user bisa akses, controller memvalidasi
+    // apakah user tersebut benar-benar Amir pada jadwal yang dimaksud
+    // ============================================================
+    Route::prefix('amir')->name('amir.')->group(function () {
+        Route::get('/laporan', [AmirLaporanController::class, 'index'])->name('laporan.index');
+        Route::get('/laporan/{jadwal_id}/sesi', [AmirLaporanController::class, 'show'])->name('laporan.show');
+        Route::get('/laporan/{jadwal_id}/buat', [AmirLaporanController::class, 'create'])->name('laporan.create');
+        Route::post('/laporan/{jadwal_id}/buat', [AmirLaporanController::class, 'store'])->name('laporan.store');
+        Route::get('/laporan/{id}/edit', [AmirLaporanController::class, 'edit'])->name('laporan.edit');
+        Route::put('/laporan/{id}/edit', [AmirLaporanController::class, 'update'])->name('laporan.update');
+        Route::post('/laporan/{id}/kirim', [AmirLaporanController::class, 'kirim'])->name('laporan.kirim');
+        Route::post('/laporan/{id}/hapus-dokumen', [AmirLaporanController::class, 'hapusDokumen'])->name('laporan.hapus-dokumen');
+    });
+
+    // ============================================================
+    // PERSETUJUAN LAPORAN — Pengurus Inti & Pengurus Wilayah
+    // ============================================================
+    Route::middleware('role:pengurus_inti,pengurus_wilayah')->prefix('persetujuan-laporan')->name('persetujuan.')->group(function () {
+        Route::get('/', [PersetujuanLaporanController::class, 'index'])->name('index');
+        Route::get('/{id}', [PersetujuanLaporanController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [PersetujuanLaporanController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [PersetujuanLaporanController::class, 'reject'])->name('reject');
     });
 
     // ============================================================

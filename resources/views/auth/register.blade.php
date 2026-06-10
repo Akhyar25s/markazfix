@@ -60,6 +60,20 @@
                     </div>
 
                     <div class="space-y-1">
+                        <label for="jenis_kelamin" class="block text-sm font-bold text-foreground/80 pl-1">Jenis Kelamin *</label>
+                        <select id="jenis_kelamin" name="jenis_kelamin" required class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki (Ikhwan)</option>
+                            <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan (Akhwat)</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="tanggal_lahir" class="block text-sm font-bold text-foreground/80 pl-1">Tanggal Lahir *</label>
+                        <input type="date" id="tanggal_lahir" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                    </div>
+
+                    <div class="space-y-1">
                         <label for="password" class="block text-sm font-bold text-foreground/80 pl-1">Kata Sandi *</label>
                         <input type="password" id="password" name="password" required placeholder="Minimal 8 karakter" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all placeholder:text-muted-foreground/50 text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
                     </div>
@@ -101,7 +115,8 @@
                     <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     Pendaftaran Wajah
                 </h2>
-                <p class="text-xs font-medium text-muted-foreground">Arahkan wajah Anda ke kamera dan pastikan pencahayaan cukup. Klik "Buka Kamera" lalu "Ambil Foto".</p>
+                <p class="text-xs font-medium text-muted-foreground">Arahkan wajah Anda ke kamera. Anda perlu mengambil 3 foto (Depan, Hadap Kiri, Hadap Kanan) secara berurutan.</p>
+                <div id="angle-instruction" class="text-center font-bold text-primary mb-2 hidden">Ambil Foto Wajah Tampak Depan</div>
                 
                 <div class="flex flex-col items-center border border-border/50 rounded-2xl p-6 bg-white/30 backdrop-blur-md shadow-inner">
                     <!-- Video Preview -->
@@ -128,20 +143,28 @@
                         </button>
                         <button type="button" id="take-photo" class="px-5 py-2.5 bg-gradient-to-r from-secondary to-yellow-500 border border-transparent text-white font-bold rounded-xl hover:opacity-90 shadow-md shadow-secondary/20 transition-all text-sm flex items-center gap-2 hidden animate-in zoom-in">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                            Ambil Foto
+                            <span id="take-photo-text">Ambil Foto Depan</span>
                         </button>
                         <button type="button" id="retake-photo" class="px-5 py-2.5 bg-white border border-border text-foreground font-bold rounded-xl hover:bg-gray-50 hover:shadow-md transition-all text-sm flex items-center gap-2 hidden">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            Ulangi
+                            Ulangi Semua
                         </button>
                     </div>
 
-                    <!-- Hidden Input for Base64 Image -->
-                    <input type="hidden" id="foto_wajah_base64" name="foto_wajah_base64" required>
+                    <!-- Hidden Input for 3 Angles -->
+                    <input type="hidden" id="foto_wajah_depan" name="foto_wajah_depan" required>
+                    <input type="hidden" id="foto_wajah_kiri" name="foto_wajah_kiri" required>
+                    <input type="hidden" id="foto_wajah_kanan" name="foto_wajah_kanan" required>
                     
+                    <div id="photos-preview-container" class="flex gap-2 mt-4 hidden">
+                        <img id="preview-depan" class="w-16 h-16 object-cover rounded-lg border-2 border-primary/50" />
+                        <img id="preview-kiri" class="w-16 h-16 object-cover rounded-lg border-2 border-primary/50" />
+                        <img id="preview-kanan" class="w-16 h-16 object-cover rounded-lg border-2 border-primary/50" />
+                    </div>
+
                     <p id="photo-status" class="text-emerald-600 bg-emerald-50 px-4 py-2 rounded-lg text-xs font-bold mt-4 flex items-center gap-2 border border-emerald-200 shadow-sm hidden">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        Foto wajah berhasil direkam
+                        3 Wajah berhasil direkam
                     </p>
                 </div>
             </div>
@@ -171,27 +194,25 @@
         const takeBtn = document.getElementById('take-photo');
         const retakeBtn = document.getElementById('retake-photo');
         const placeholder = document.getElementById('camera-placeholder');
-        const base64Input = document.getElementById('foto_wajah_base64');
-        const photoStatus = document.getElementById('photo-status');
         const form = document.querySelector('form');
+        const photoStatus = document.getElementById('photo-status');
+        const takePhotoText = document.getElementById('take-photo-text');
+        const angleInstruction = document.getElementById('angle-instruction');
+        const photosPreviewContainer = document.getElementById('photos-preview-container');
         
+        const angles = ['depan', 'kiri', 'kanan'];
+        const angleLabels = ['Tampak Depan', 'Menoleh ke Kiri', 'Menoleh ke Kanan'];
+        let currentAngle = 0;
         let stream = null;
 
         // Buka Kamera
         startBtn.addEventListener('click', async () => {
             try {
-                // Tampilkan loading state
                 startBtn.innerHTML = '<svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memuat...';
                 startBtn.disabled = true;
 
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" }, // Paksa gunakan kamera depan di HP
-                    audio: false 
-                });
-                
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
-                
-                // Pastikan video dimainkan
                 await video.play();
 
                 video.classList.remove('hidden');
@@ -202,67 +223,80 @@
                 takeBtn.classList.remove('hidden');
                 retakeBtn.classList.add('hidden');
                 photoStatus.classList.add('hidden');
-                base64Input.value = '';
+                photosPreviewContainer.classList.add('hidden');
+                angleInstruction.classList.remove('hidden');
+                
+                // Reset state
+                currentAngle = 0;
+                document.getElementById('foto_wajah_depan').value = '';
+                document.getElementById('foto_wajah_kiri').value = '';
+                document.getElementById('foto_wajah_kanan').value = '';
+                updateInstruction();
             } catch (err) {
                 alert("Gagal mengakses kamera. Error: " + err.message);
-                console.error("Camera error:", err);
             } finally {
                 startBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Buka Kamera';
                 startBtn.disabled = false;
             }
         });
 
+        function updateInstruction() {
+            if (currentAngle < 3) {
+                angleInstruction.textContent = "Ambil Foto Wajah " + angleLabels[currentAngle];
+                takePhotoText.textContent = "Ambil Foto " + (currentAngle + 1) + "/3";
+            }
+        }
+
         // Ambil Foto
         takeBtn.addEventListener('click', () => {
-            if(!stream) return;
+            if(!stream || currentAngle >= 3) return;
             
-            // Set canvas size sama dengan video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
-            // Gambar frame video ke canvas
             const context = canvas.getContext('2d');
-            
-            // Mirror canvas horizontal (karena video di-mirror, hasil fotonya kita mirror juga agar konsisten)
             context.translate(canvas.width, 0);
             context.scale(-1, 1);
-            
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            // Ambil data base64 (format JPEG dengan quality 0.8)
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            base64Input.value = dataUrl;
             
-            // Tampilkan foto di img preview
-            const preview = document.getElementById('photo-preview');
-            preview.src = dataUrl;
-            preview.classList.remove('hidden');
+            // Simpan berdasar angle
+            const angleName = angles[currentAngle];
+            document.getElementById('foto_wajah_' + angleName).value = dataUrl;
             
-            // Sembunyikan video stream live
-            video.classList.add('hidden');
+            // Tampilkan preview kecil
+            const thumb = document.getElementById('preview-' + angleName);
+            thumb.src = dataUrl;
             
-            // Matikan stream kamera untuk menghemat baterai
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
+            currentAngle++;
             
-            // Update UI Button
-            takeBtn.classList.add('hidden');
-            retakeBtn.classList.remove('hidden');
-            photoStatus.classList.remove('hidden');
+            if (currentAngle < 3) {
+                updateInstruction();
+            } else {
+                // Semua 3 foto sudah diambil
+                photosPreviewContainer.classList.remove('hidden');
+                video.classList.add('hidden');
+                angleInstruction.classList.add('hidden');
+                
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                
+                takeBtn.classList.add('hidden');
+                retakeBtn.classList.remove('hidden');
+                photoStatus.classList.remove('hidden');
+            }
         });
 
         // Ulangi Foto
         retakeBtn.addEventListener('click', () => {
-            // Sembunyikan preview
-            document.getElementById('photo-preview').classList.add('hidden');
-            startBtn.click(); // Panggil ulang fungsi buka kamera
+            startBtn.click();
         });
 
         // Validasi sebelum submit
         form.addEventListener('submit', (e) => {
-            if(!base64Input.value) {
+            if(currentAngle < 3) {
                 e.preventDefault();
-                alert('Anda harus mengambil foto wajah (Scan Kamera) terlebih dahulu!');
+                alert('Anda harus mengambil 3 foto wajah secara berurutan terlebih dahulu!');
             }
         });
     </script>

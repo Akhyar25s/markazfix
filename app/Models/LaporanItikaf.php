@@ -24,12 +24,14 @@ class LaporanItikaf extends Model
         'catatan_inti',
         'dikirim_pada',
         'disetujui_pada',
+        'dokumen_pendukung',
     ];
 
     protected $casts = [
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
         'peserta_hadir' => 'array',
+        'dokumen_pendukung' => 'array',
         'dikirim_pada' => 'datetime',
         'disetujui_pada' => 'datetime',
     ];

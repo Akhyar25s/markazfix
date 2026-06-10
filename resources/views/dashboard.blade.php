@@ -19,11 +19,17 @@
                 <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
-                <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">+12%</x-badge>
+                @if(Auth::user()->role !== 'anggota')
+                <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">Aktif</x-badge>
+                @endif
             </div>
             <div>
-                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Anggota</div>
-                <div class="text-3xl font-black text-foreground">12,450</div>
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">
+                    {{ Auth::user()->role === 'anggota' ? 'I\'tikaf Diikuti' : 'Total Anggota' }}
+                </div>
+                <div class="text-3xl font-black text-foreground">
+                    {{ Auth::user()->role === 'anggota' ? count($jadwalSaya ?? []) : number_format($totalAnggota ?? 0, 0, ',', '.') }}
+                </div>
             </div>
         </x-card>
 
@@ -37,8 +43,10 @@
             </div>
             <div>
                 <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">I'tikaf Berjalan</div>
-                <div class="text-3xl font-black text-foreground">8</div>
-                <div class="text-xs text-muted-foreground mt-1">Di 5 Wilayah</div>
+                <div class="text-3xl font-black text-foreground">{{ $itikafBerjalan ?? 0 }}</div>
+                @if(Auth::user()->role === 'pengurus_inti')
+                <div class="text-xs text-muted-foreground mt-1">{{ $itikafDijadwalkan ?? 0 }} Dijadwalkan</div>
+                @endif
             </div>
         </x-card>
 
@@ -52,8 +60,12 @@
                 </div>
             </div>
             <div>
-                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">Menunggu Approval</div>
-                <div class="text-3xl font-black text-red-500">24</div>
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">
+                    {{ Auth::user()->role === 'anggota' ? 'Total Kehadiran' : 'Menunggu Approval' }}
+                </div>
+                <div class="text-3xl font-black text-red-500">
+                    {{ Auth::user()->role === 'anggota' ? ($totalHadir ?? 0) : ($laporanMenunggu ?? 0) }}
+                </div>
             </div>
         </x-card>
 
@@ -123,41 +135,52 @@
                         Lihat Semua <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
+                @if(Auth::user()->role !== 'anggota')
                 <x-table :headers="['Sesi I\'tikaf', 'Nama Amir', 'Wilayah', 'Status', 'Aksi']">
+                    @forelse($laporanTerbaru as $laporan)
                     <tr class="border-b border-border transition-colors hover:bg-muted/50">
-                        <td class="p-4 align-middle font-medium text-foreground">Ramadhan 1445 H - Gel. 1</td>
-                        <td class="p-4 align-middle text-muted-foreground">Ahmad Faisal</td>
-                        <td class="p-4 align-middle text-muted-foreground">Jakarta Selatan</td>
+                        <td class="p-4 align-middle font-medium text-foreground">{{ $laporan->jadwal->nama_kegiatan ?? 'I\'tikaf' }}</td>
+                        <td class="p-4 align-middle text-muted-foreground">{{ $laporan->amir->name ?? '-' }}</td>
+                        <td class="p-4 align-middle text-muted-foreground">{{ $laporan->jadwal->mahallah->wilayah->nama ?? '-' }}</td>
                         <td class="p-4 align-middle">
-                            <x-badge variant="danger" class="bg-red-500/10 text-red-500 border-red-500/20">Menunggu Inti</x-badge>
+                            @if($laporan->status === 'menunggu_inti')
+                                <x-badge variant="danger" class="bg-red-500/10 text-red-500 border-red-500/20">Menunggu Inti</x-badge>
+                            @elseif($laporan->status === 'menunggu_wilayah')
+                                <x-badge variant="warning" class="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Menunggu Wilayah</x-badge>
+                            @else
+                                <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">{{ ucfirst($laporan->status) }}</x-badge>
+                            @endif
                         </td>
                         <td class="p-4 align-middle">
-                            <x-button variant="outline" class="h-8 px-3 text-xs">Review</x-button>
+                            <a href="/laporan/{{ $laporan->id }}">
+                                <x-button variant="outline" class="h-8 px-3 text-xs">Review</x-button>
+                            </a>
                         </td>
                     </tr>
-                    <tr class="border-b border-border transition-colors hover:bg-muted/50">
-                        <td class="p-4 align-middle font-medium text-foreground">Akhir Pekan - Safar</td>
-                        <td class="p-4 align-middle text-muted-foreground">Budi Santoso</td>
-                        <td class="p-4 align-middle text-muted-foreground">Bandung Raya</td>
-                        <td class="p-4 align-middle">
-                            <x-badge variant="warning" class="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Menunggu Wilayah</x-badge>
-                        </td>
-                        <td class="p-4 align-middle">
-                            <x-button variant="outline" class="h-8 px-3 text-xs">Review</x-button>
-                        </td>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="p-4 text-center text-muted-foreground">Tidak ada laporan terbaru.</td>
                     </tr>
-                    <tr class="border-b border-border transition-colors hover:bg-muted/50">
-                        <td class="p-4 align-middle font-medium text-foreground">Persiapan Ramadhan</td>
-                        <td class="p-4 align-middle text-muted-foreground">Zainal Abidin</td>
-                        <td class="p-4 align-middle text-muted-foreground">Medan Utara</td>
-                        <td class="p-4 align-middle">
-                            <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">Disetujui</x-badge>
-                        </td>
-                        <td class="p-4 align-middle">
-                            <x-button variant="default" class="h-8 px-3 text-xs bg-muted text-muted-foreground hover:bg-muted/80">Lihat</x-button>
-                        </td>
-                    </tr>
+                    @endforelse
                 </x-table>
+                @else
+                <x-table :headers="['Kegiatan', 'Lokasi', 'Tanggal', 'Aksi']">
+                    @forelse($jadwalSaya as $jadwal)
+                    <tr class="border-b border-border transition-colors hover:bg-muted/50">
+                        <td class="p-4 align-middle font-medium text-foreground">I'tikaf</td>
+                        <td class="p-4 align-middle text-muted-foreground">-</td>
+                        <td class="p-4 align-middle text-muted-foreground">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('d M Y') }}</td>
+                        <td class="p-4 align-middle">
+                            <x-button variant="outline" class="h-8 px-3 text-xs">Lihat</x-button>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="p-4 text-center text-muted-foreground">Belum ada i'tikaf yang diikuti.</td>
+                    </tr>
+                    @endforelse
+                </x-table>
+                @endif
             </x-card>
         </div>
 
@@ -169,35 +192,23 @@
                 </x-slot>
                 
                 <div class="space-y-4 flex-1">
-                    <!-- Schedule Item 1 -->
+                    @forelse($jadwalMendatang as $jadwal)
                     <div class="flex gap-4 items-start p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer group">
                         <div class="flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-lg w-14 h-14 flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">Okt</span>
-                            <span class="text-xl font-black leading-none mt-0.5">12</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->translatedFormat('M') }}</span>
+                            <span class="text-xl font-black leading-none mt-0.5">{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('d') }}</span>
                         </div>
                         <div class="flex flex-col gap-1">
-                            <h4 class="font-semibold text-foreground group-hover:text-primary transition-colors">I'tikaf Akbar Jabar</h4>
+                            <h4 class="font-semibold text-foreground group-hover:text-primary transition-colors">I'tikaf</h4>
                             <p class="text-sm text-muted-foreground flex items-center gap-1">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                Masjid Raya Bandung
+                                {{ $jadwal->mahallah->nama ?? 'Lokasi belum diset' }}
                             </p>
                         </div>
                     </div>
-                    
-                    <!-- Schedule Item 2 -->
-                    <div class="flex gap-4 items-start p-4 rounded-xl bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer group">
-                        <div class="flex flex-col items-center justify-center bg-accent text-accent-foreground rounded-lg w-14 h-14 flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                            <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">Okt</span>
-                            <span class="text-xl font-black leading-none mt-0.5">19</span>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <h4 class="font-semibold text-foreground group-hover:text-accent transition-colors">Pembekalan Amir</h4>
-                            <p class="text-sm text-muted-foreground flex items-center gap-1">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                Islamic Center Jakarta
-                            </p>
-                        </div>
-                    </div>
+                    @empty
+                    <p class="text-sm text-muted-foreground text-center py-4">Belum ada jadwal i'tikaf mendatang.</p>
+                    @endforelse
                 </div>
                 
                 <div class="mt-6 pt-4 border-t border-border">

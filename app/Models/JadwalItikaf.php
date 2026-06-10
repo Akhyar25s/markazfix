@@ -34,4 +34,9 @@ class JadwalItikaf extends Model
         // Gunakan foreign key yang benar: jadwal_itikaf_id
         return $this->hasMany(PesertaItikaf::class, 'jadwal_itikaf_id');
     }
+
+    public function laporan()
+    {
+        return $this->hasMany(LaporanItikaf::class, 'jadwal_itikaf_id');
+    }
 }
