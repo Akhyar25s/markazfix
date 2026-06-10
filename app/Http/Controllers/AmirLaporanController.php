@@ -10,6 +10,7 @@ use App\Models\LaporanItikaf;
 use App\Models\JadwalItikaf;
 use App\Models\PesertaItikaf;
 use Carbon\Carbon;
+use App\Services\NotifikasiService;
 
 class AmirLaporanController extends Controller
 {
@@ -253,6 +254,14 @@ class AmirLaporanController extends Controller
             'status'       => 'menunggu_wilayah',
             'dikirim_pada' => now(),
         ]);
+
+        // Kirim Notifikasi ke Pengurus Wilayah
+        NotifikasiService::notifyPengurusWilayah(
+            'Laporan Sesi Baru',
+            'Amir I\'tikaf telah mengirimkan laporan sesi "' . $laporan->nama_sesi . '" untuk ditinjau.',
+            'info',
+            $laporan->id
+        );
 
         return redirect()->route('amir.laporan.show', $laporan->jadwal_itikaf_id)
             ->with('success', 'Laporan berhasil dikirim ke Pengurus Wilayah.');

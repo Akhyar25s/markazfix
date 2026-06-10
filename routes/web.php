@@ -119,6 +119,17 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ============================================================
+    // MODUL M5: NOTIFIKASI IN-APP — semua role login bisa akses
+    // ============================================================
+    Route::prefix('notifikasi')->name('notifikasi.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\NotifikasiController::class, 'index'])->name('index');
+        Route::post('/tandai-semua', [\App\Http\Controllers\NotifikasiController::class, 'tandaiSemuaDibaca'])->name('tandai-semua');
+        Route::get('/{id}/tandai', [\App\Http\Controllers\NotifikasiController::class, 'tandaiDibaca'])->name('tandai');
+        Route::delete('/{id}', [\App\Http\Controllers\NotifikasiController::class, 'hapus'])->name('hapus');
+        Route::get('/api/unread-count', [\App\Http\Controllers\NotifikasiController::class, 'jumlahBelumDibaca']);
+    });
+
+    // ============================================================
     // LOGOUT (semua role)
     // ============================================================
     Route::post('/logout', function (\Illuminate\Http\Request $request) {

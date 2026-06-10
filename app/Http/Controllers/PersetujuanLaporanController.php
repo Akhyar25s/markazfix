@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\LaporanItikaf;
 use App\Models\JadwalItikaf;
+use App\Services\NotifikasiService;
 
 class PersetujuanLaporanController extends Controller
 {
@@ -92,6 +93,14 @@ class PersetujuanLaporanController extends Controller
             $laporan->update(['status' => 'menunggu_inti']);
             $msg = 'Laporan disetujui dan diteruskan ke Pengurus Inti.';
 
+            // Notifikasi ke Pengurus Inti
+            NotifikasiService::notifyPengurusInti(
+                'Persetujuan Laporan Sesi',
+                'Pengurus Wilayah telah meneruskan laporan sesi "' . $laporan->nama_sesi . '" untuk persetujuan final Anda.',
+                'info',
+                $laporan->id
+            );
+
         } elseif ($user->role === 'pengurus_inti') {
             if ($laporan->status !== 'menunggu_inti') {
                 return back()->with('error', 'Status laporan tidak valid untuk disetujui.');
@@ -101,6 +110,16 @@ class PersetujuanLaporanController extends Controller
                 'disetujui_pada' => now(),
             ]);
             $msg = 'Laporan disetujui secara final.';
+
+            // Notifikasi ke Amir
+            NotifikasiService::kirim(
+                $laporan->amir_id,
+                'Laporan Disetujui',
+                'Laporan sesi "' . $laporan->nama_sesi . '" telah disetujui secara final oleh Pengurus Inti.',
+                'success',
+                $laporan->id,
+                'laporan_itikaf'
+            );
 
         } else {
             abort(403);
@@ -131,6 +150,16 @@ class PersetujuanLaporanController extends Controller
             ]);
             $msg = 'Laporan dikembalikan ke Amir untuk direvisi.';
 
+            // Notifikasi ke Amir
+            NotifikasiService::kirim(
+                $laporan->amir_id,
+                'Revisi Laporan Sesi',
+                'Laporan sesi "' . $laporan->nama_sesi . '" dikembalikan oleh Pengurus Wilayah. Silakan periksa catatan revisi.',
+                'warning',
+                $laporan->id,
+                'laporan_itikaf'
+            );
+
         } elseif ($user->role === 'pengurus_inti') {
             if ($laporan->status !== 'menunggu_inti') {
                 return back()->with('error', 'Status laporan tidak valid.');
@@ -140,6 +169,16 @@ class PersetujuanLaporanController extends Controller
                 'catatan_inti' => $request->catatan,
             ]);
             $msg = 'Laporan dikembalikan ke Pengurus Wilayah untuk ditinjau ulang.';
+
+            // Notifikasi ke Amir (dan secara teknis bisa juga ke Wilayah)
+            NotifikasiService::kirim(
+                $laporan->amir_id,
+                'Revisi Laporan Sesi (Dari Inti)',
+                'Laporan sesi "' . $laporan->nama_sesi . '" dikembalikan oleh Pengurus Inti. Silakan perbaiki laporan Anda.',
+                'warning',
+                $laporan->id,
+                'laporan_itikaf'
+            );
 
         } else {
             abort(403);

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\JadwalItikaf;
 use App\Models\Mahallah;
 use Illuminate\Support\Facades\Auth;
+use App\Services\NotifikasiService;
 
 class JadwalItikafController extends Controller
 {
@@ -57,7 +58,7 @@ class JadwalItikafController extends Controller
             'longitude' => 'nullable|numeric',
         ]);
 
-        JadwalItikaf::create([
+        $jadwal = JadwalItikaf::create([
             'nama_itikaf' => $request->nama_itikaf,
             'keterangan' => $request->keterangan,
             'tanggal_mulai' => $request->tanggal_mulai,
@@ -69,6 +70,14 @@ class JadwalItikafController extends Controller
             'dibuat_oleh' => Auth::id(),
             'status' => 'dijadwalkan',
         ]);
+
+        // Notifikasi ke Pengurus Wilayah
+        NotifikasiService::notifyPengurusWilayah(
+            'Jadwal I\'tikaf Baru',
+            'Jadwal i\'tikaf baru "' . $jadwal->nama_itikaf . '" telah dibuat. Silakan daftarkan peserta.',
+            'info',
+            $jadwal->id
+        );
 
         return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil dibuat!');
     }
@@ -172,6 +181,16 @@ class JadwalItikafController extends Controller
                 'adalah_amir' => true,
                 'dipilih_oleh' => Auth::id()
             ]);
+
+            // Notifikasi ke Amir terpilih
+            NotifikasiService::kirim(
+                $pesertaTerpilih->pengguna_id,
+                'Penugasan Amir I\'tikaf',
+                'Anda telah ditunjuk sebagai Amir I\'tikaf untuk jadwal "' . $jadwal->nama_itikaf . '".',
+                'info',
+                $jadwal->id,
+                'jadwal_itikaf'
+            );
 
             \Illuminate\Support\Facades\DB::commit();
             return back()->with('success', 'Peserta ' . $pesertaTerpilih->pengguna->name . ' berhasil ditunjuk sebagai Amir I\'tikaf.');

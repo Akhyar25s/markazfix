@@ -153,8 +153,21 @@
                 <span class="text-sm font-semibold text-foreground/80 tracking-wide">Sistem Informasi Manajemen Organisasi</span>
             </div>
             
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4 sm:gap-6">
                 @auth
+                {{-- Notification Bell --}}
+                @php
+                    $unreadCount = \App\Models\Notifikasi::where('pengguna_id', Auth::id())->where('dibaca', false)->count();
+                @endphp
+                <a href="{{ route('notifikasi.index') }}" class="relative p-2 text-muted-foreground hover:text-primary transition-colors bg-white/50 hover:bg-white rounded-full shadow-sm">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    @if($unreadCount > 0)
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full border-2 border-white">
+                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                        </span>
+                    @endif
+                </a>
+
                 <div class="text-right hidden sm:block">
                     <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
                     <div class="text-xs font-medium text-secondary capitalize">{{ str_replace('_', ' ', Auth::user()->role) }}</div>

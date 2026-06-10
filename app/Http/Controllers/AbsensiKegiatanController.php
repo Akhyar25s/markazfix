@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\NotifikasiService;
 
 class AbsensiKegiatanController extends Controller
 {
@@ -91,6 +92,45 @@ class AbsensiKegiatanController extends Controller
                 'status_wajah' => 'dikenali',
                 'status_absen' => 'berhasil'
             ]);
+
+            // Cek pencapaian target
+            $tahunSekarang = date('Y');
+            $bulanSekarang = date('n');
+            
+            $target = \App\Models\TargetKegiatan::where('jenis_kegiatan_id', $request->jenis_kegiatan_id)
+                ->where('tahun', $tahunSekarang)
+                ->where(function($q) use ($bulanSekarang) {
+                    $q->where('periode', 'tahunan')
+                      ->orWhere(function($sq) use ($bulanSekarang) {
+                          $sq->where('periode', 'bulanan')->where('bulan', $bulanSekarang);
+                      });
+                })
+                ->orderBy('periode', 'asc') // Prioritaskan bulanan jika ada dua-duanya
+                ->first();
+
+            if ($target) {
+                $query = \App\Models\AbsensiKegiatan::where('pengguna_id', $user->id)
+                    ->where('jenis_kegiatan_id', $request->jenis_kegiatan_id)
+                    ->where('status_absen', 'berhasil')
+                    ->whereYear('waktu_kegiatan', $tahunSekarang);
+                    
+                if ($target->periode === 'bulanan') {
+                    $query->whereMonth('waktu_kegiatan', $bulanSekarang);
+                }
+
+                $capaian = $query->count();
+
+                if ($capaian == $target->jumlah_target) {
+                    NotifikasiService::kirim(
+                        $user->id,
+                        'Target Tercapai! 🎉',
+                        'Alhamdulillah, Anda telah mencapai target ' . $target->periode . ' untuk kegiatan ini.',
+                        'success',
+                        $target->id,
+                        'target_kegiatan'
+                    );
+                }
+            }
 
             return redirect()->route('absensi-kegiatan.index')->with('success', 'Kegiatan berhasil dicatat! Barakallah fiikum.');
         } else {

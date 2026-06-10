@@ -8,6 +8,7 @@ use App\Models\PesertaItikaf;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotifikasiService;
 
 class PesertaItikafController extends Controller
 {
@@ -79,6 +80,16 @@ class PesertaItikafController extends Controller
                         'pengguna_id' => $pengguna_id,
                         'status_pendaftaran' => 'disetujui'
                     ]);
+
+                    // Kirim Notifikasi ke Peserta Terpilih
+                    NotifikasiService::kirim(
+                        $pengguna_id,
+                        'Pendaftaran I\'tikaf',
+                        'Anda telah didaftarkan sebagai peserta pada jadwal i\'tikaf "' . $jadwal->nama_itikaf . '".',
+                        'info',
+                        $jadwal->id,
+                        'jadwal_itikaf'
+                    );
                 }
             }
 
