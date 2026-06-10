@@ -6,13 +6,26 @@
 <div class="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
 
     {{-- Header --}}
-    <div class="flex items-center gap-4">
-        <a href="{{ route('persetujuan.index') }}" class="p-2 rounded-xl bg-white/60 hover:bg-white border border-border/50 text-muted-foreground hover:text-primary transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-        </a>
-        <div>
-            <h1 class="text-2xl font-extrabold text-foreground tracking-tight">Detail Laporan Sesi</h1>
-            <p class="text-sm text-muted-foreground mt-0.5">Tinjau dan berikan keputusan pada laporan ini</p>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="{{ route('persetujuan.index') }}" class="p-2 rounded-xl bg-white/60 hover:bg-white border border-border/50 text-muted-foreground hover:text-primary transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-extrabold text-foreground tracking-tight">Detail Laporan Sesi</h1>
+                <p class="text-sm text-muted-foreground mt-0.5">Tinjau dan berikan keputusan pada laporan ini</p>
+            </div>
+        </div>
+        
+        <div class="flex gap-2">
+            <a href="{{ route('export.laporan-sesi', ['id' => $laporan->id, 'format' => 'pdf']) }}" class="inline-flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-semibold rounded-xl border border-red-200 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                PDF
+            </a>
+            <a href="{{ route('export.laporan-sesi', ['id' => $laporan->id, 'format' => 'excel']) }}" class="inline-flex items-center gap-2 px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100 text-sm font-semibold rounded-xl border border-green-200 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Excel
+            </a>
         </div>
     </div>
 

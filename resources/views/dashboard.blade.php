@@ -5,10 +5,23 @@
 @section('content')
 <div class="space-y-8 animate-fade-in pb-8">
     <!-- Welcome Header -->
-    <div class="flex flex-col gap-2">
-        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">Assalamu'alaikum, {{ Auth::user()->name ?? 'Admin' }}</h1>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">Assalamu'alaikum, {{ Auth::user()->name ?? 'Admin' }}</h1>
+            
+            @if(Auth::user()->role !== 'anggota')
+            <div class="flex gap-2">
+                <a href="{{ route('export.anggota', 'pdf') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-semibold rounded-xl border border-red-200 shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Data Anggota (PDF)
+                </a>
+                <a href="{{ route('export.anggota', 'excel') }}" class="inline-flex items-center gap-2 px-3 py-2 bg-green-50 text-green-600 hover:bg-green-100 text-sm font-semibold rounded-xl border border-green-200 shadow-sm transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Data Anggota (Excel)
+                </a>
+            </div>
+            @endif
+        </div>
         <p class="text-lg text-muted-foreground">Berikut adalah ringkasan aktivitas dan laporan yang membutuhkan perhatian Anda hari ini.</p>
-    </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -69,21 +82,42 @@
             </div>
         </x-card>
 
-        <!-- Stat Card 4 -->
+        <!-- Stat Card 4 (Dinamis berdasarkan Role) -->
         <x-card class="bg-gradient-to-br from-primary to-accent border-0 shadow-lg shadow-primary/30 text-white relative overflow-hidden">
             <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PC9zdmc+')] opacity-20"></div>
             <div class="flex flex-col h-full justify-between relative z-10">
                 <div class="flex justify-between items-start">
                     <div>
-                        <div class="text-sm text-white/80 font-semibold uppercase tracking-wider mb-1">Target Kegiatan</div>
-                        <div class="text-4xl font-black">85%</div>
-                        <div class="text-xs text-white/80 mt-1">17/20 Terlaksana</div>
+                        @if(Auth::user()->role === 'anggota')
+                            @php
+                                $totalTarget = 0;
+                                $totalCapaian = 0;
+                                if(isset($progressKegiatan)) {
+                                    foreach($progressKegiatan as $prog) {
+                                        $totalTarget += $prog['target'];
+                                        $totalCapaian += $prog['capaian'];
+                                    }
+                                }
+                                $percentGlobal = $totalTarget > 0 ? min(100, round(($totalCapaian / $totalTarget) * 100)) : 0;
+                            @endphp
+                            <div class="text-sm text-white/80 font-semibold uppercase tracking-wider mb-1">Target Individual</div>
+                            <div class="text-4xl font-black">{{ $percentGlobal }}%</div>
+                            <div class="text-xs text-white/80 mt-1">{{ $totalCapaian }}/{{ $totalTarget }} Terlaksana</div>
+                        @elseif(Auth::user()->role === 'pengurus_wilayah')
+                            <div class="text-sm text-white/80 font-semibold uppercase tracking-wider mb-1">Total Peserta I'tikaf</div>
+                            <div class="text-4xl font-black">{{ $totalPesertaItikaf ?? 0 }}</div>
+                            <div class="text-xs text-white/80 mt-1">Dari Wilayah Anda</div>
+                        @else
+                            <div class="text-sm text-white/80 font-semibold uppercase tracking-wider mb-1">Kegiatan Global (Bulan Ini)</div>
+                            <div class="text-4xl font-black">{{ collect($kegiatanGlobal ?? [])->sum('total') }}</div>
+                            <div class="text-xs text-white/80 mt-1">Aktivitas Terlaksana</div>
+                        @endif
                     </div>
                     <!-- Progress Ring -->
                     <div class="relative w-14 h-14 flex items-center justify-center">
                         <svg class="w-full h-full transform -rotate-90 drop-shadow-md" viewBox="0 0 36 36">
                             <path class="text-white/20" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
-                            <path class="text-white" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-width="4" stroke-linecap="round"></path>
+                            <path class="text-white" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="{{ Auth::user()->role === 'anggota' ? ($percentGlobal ?? 0) : 100 }}, 100" stroke-width="4" stroke-linecap="round"></path>
                         </svg>
                     </div>
                 </div>
@@ -215,6 +249,38 @@
                     <x-button variant="outline" class="w-full">Lihat Kalender Lengkap</x-button>
                 </div>
             </x-card>
+
+            @if(Auth::user()->role === 'anggota')
+            <!-- Progress Kegiatan (Khusus Anggota) -->
+            <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg mt-6">
+                <x-slot name="header">
+                    <h2 class="font-bold text-lg tracking-tight">Progres Target Kegiatan</h2>
+                </x-slot>
+                
+                <div class="space-y-5">
+                    @forelse($progressKegiatan ?? [] as $prog)
+                    <div>
+                        <div class="flex justify-between items-end mb-1.5">
+                            <span class="text-sm font-semibold text-foreground">{{ $prog['nama'] }}</span>
+                            <span class="text-xs font-medium text-muted-foreground">{{ $prog['capaian'] }} / {{ $prog['target'] }}</span>
+                        </div>
+                        <div class="w-full bg-muted/50 rounded-full h-2.5 overflow-hidden border border-border/50">
+                            <div class="bg-gradient-to-r from-primary to-accent h-2.5 rounded-full transition-all duration-1000 ease-out" style="width: {{ $prog['persentase'] }}%"></div>
+                        </div>
+                    </div>
+                    @empty
+                    <p class="text-sm text-muted-foreground text-center py-4">Belum ada target kegiatan yang diset untuk Anda bulan ini.</p>
+                    @endforelse
+                </div>
+                
+                <div class="mt-5 text-center">
+                    <a href="{{ route('absensi-kegiatan.index') }}" class="text-xs font-semibold text-primary hover:underline flex items-center justify-center gap-1">
+                        Input Kegiatan Baru
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                </div>
+            </x-card>
+            @endif
         </div>
     </div>
 </div>

@@ -30,6 +30,14 @@ class DashboardController extends Controller
         $itikafBerjalan = JadwalItikaf::where('status', 'berlangsung')->count();
         $itikafDijadwalkan = JadwalItikaf::where('status', 'dijadwalkan')->count();
 
+        // Total anggota per wilayah (untuk grafik/tabel)
+        $anggotaPerWilayah = DB::table('users as u')
+            ->join('mahallahs as m', 'm.id', '=', 'u.wilayah_id')
+            ->where('u.role', 'anggota')
+            ->select('m.nama_mahallah', DB::raw('count(u.id) as total'))
+            ->groupBy('m.nama_mahallah')
+            ->get();
+
         // Laporan menunggu persetujuan Pengurus Inti
         $laporanMenunggu = LaporanItikaf::where('status', 'menunggu_inti')->count();
 
@@ -45,8 +53,19 @@ class DashboardController extends Controller
             ->orderBy('tanggal_mulai', 'asc')
             ->limit(3)
             ->get();
-
-        // Data untuk peta mahallah (ditangani MahallahController)
+            
+        // Rekap Kegiatan Individual Global (Bulan ini)
+        $bulanSekarang = date('n');
+        $tahunSekarang = date('Y');
+        
+        $kegiatanGlobal = DB::table('absensi_kegiatans as ak')
+            ->join('jenis_kegiatans as jk', 'jk.id', '=', 'ak.jenis_kegiatan_id')
+            ->whereYear('ak.waktu_kegiatan', $tahunSekarang)
+            ->whereMonth('ak.waktu_kegiatan', $bulanSekarang)
+            ->where('ak.status_absen', 'berhasil')
+            ->select('jk.nama_kegiatan', DB::raw('count(ak.id) as total'))
+            ->groupBy('jk.nama_kegiatan')
+            ->get();
 
         return view('dashboard', compact(
             'totalAnggota',
@@ -54,7 +73,9 @@ class DashboardController extends Controller
             'itikafDijadwalkan',
             'laporanMenunggu',
             'laporanTerbaru',
-            'jadwalMendatang'
+            'jadwalMendatang',
+            'anggotaPerWilayah',
+            'kegiatanGlobal'
         ));
     }
 
@@ -68,6 +89,12 @@ class DashboardController extends Controller
             ->count();
 
         $itikafBerjalan = JadwalItikaf::where('status', 'berlangsung')->count();
+
+        // Jumlah peserta i'tikaf dari wilayahnya
+        $totalPesertaItikaf = DB::table('peserta_itikafs as p')
+            ->join('users as u', 'u.id', '=', 'p.pengguna_id')
+            ->where('u.wilayah_id', $wilayahId)
+            ->count();
 
         // Laporan menunggu review Pengurus Wilayah (dari Amir)
         $laporanMenunggu = LaporanItikaf::where('status', 'menunggu_wilayah')
@@ -88,13 +115,30 @@ class DashboardController extends Controller
             ->limit(3)
             ->get();
 
+        // Rekap Kegiatan Individual Wilayah (Bulan ini)
+        $bulanSekarang = date('n');
+        $tahunSekarang = date('Y');
+        
+        $kegiatanWilayah = DB::table('absensi_kegiatans as ak')
+            ->join('jenis_kegiatans as jk', 'jk.id', '=', 'ak.jenis_kegiatan_id')
+            ->join('users as u', 'u.id', '=', 'ak.pengguna_id')
+            ->where('u.wilayah_id', $wilayahId)
+            ->whereYear('ak.waktu_kegiatan', $tahunSekarang)
+            ->whereMonth('ak.waktu_kegiatan', $bulanSekarang)
+            ->where('ak.status_absen', 'berhasil')
+            ->select('jk.nama_kegiatan', DB::raw('count(ak.id) as total'))
+            ->groupBy('jk.nama_kegiatan')
+            ->get();
+
         $laporanMenungguCount = $laporanMenunggu;
 
         return view('dashboard', compact(
             'totalAnggota',
             'itikafBerjalan',
             'laporanTerbaru',
-            'jadwalMendatang'
+            'jadwalMendatang',
+            'totalPesertaItikaf',
+            'kegiatanWilayah'
         ) + ['laporanMenunggu' => $laporanMenungguCount, 'itikafDijadwalkan' => 0]);
     }
 
@@ -121,6 +165,41 @@ class DashboardController extends Controller
             ->limit(3)
             ->get();
 
+        // Ambil progress kegiatan harian
+        $tahunSekarang = date('Y');
+        $bulanSekarang = date('n');
+
+        $targets = \App\Models\TargetKegiatan::with('jenisKegiatan')
+            ->where('tahun', $tahunSekarang)
+            ->where(function($q) use ($bulanSekarang) {
+                $q->where('periode', 'tahunan')
+                  ->orWhere(function($sq) use ($bulanSekarang) {
+                      $sq->where('periode', 'bulanan')->where('bulan', $bulanSekarang);
+                  });
+            })
+            ->get();
+
+        $progressKegiatan = [];
+        foreach ($targets as $target) {
+            $query = \App\Models\AbsensiKegiatan::where('pengguna_id', $user->id)
+                ->where('jenis_kegiatan_id', $target->jenis_kegiatan_id)
+                ->where('status_absen', 'berhasil')
+                ->whereYear('waktu_kegiatan', $tahunSekarang);
+                
+            if ($target->periode === 'bulanan') {
+                $query->whereMonth('waktu_kegiatan', $bulanSekarang);
+            }
+
+            $capaian = $query->count();
+            
+            $progressKegiatan[] = [
+                'nama' => $target->jenisKegiatan->nama_kegiatan,
+                'target' => $target->jumlah_target,
+                'capaian' => $capaian,
+                'persentase' => min(100, round(($capaian / max(1, $target->jumlah_target)) * 100))
+            ];
+        }
+
         $totalAnggota = 0;
         $itikafBerjalan = JadwalItikaf::where('status', 'berlangsung')->count();
         $laporanMenunggu = 0;
@@ -135,7 +214,8 @@ class DashboardController extends Controller
             'jadwalMendatang',
             'jadwalSaya',
             'totalHadir',
-            'itikafDijadwalkan'
+            'itikafDijadwalkan',
+            'progressKegiatan'
         ));
     }
 }

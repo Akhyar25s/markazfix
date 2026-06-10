@@ -130,6 +130,17 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ============================================================
+    // MODUL M6: EXPORT LAPORAN
+    // ============================================================
+    Route::get('/export/anggota/{format}', [\App\Http\Controllers\ExportController::class, 'exportAnggota'])
+        ->name('export.anggota')
+        ->where('format', 'pdf|excel');
+
+    Route::get('/export/laporan-sesi/{id}/{format}', [\App\Http\Controllers\ExportController::class, 'exportLaporanSesi'])
+        ->name('export.laporan-sesi')
+        ->where('format', 'pdf|excel');
+
+    // ============================================================
     // LOGOUT (semua role)
     // ============================================================
     Route::post('/logout', function (\Illuminate\Http\Request $request) {
