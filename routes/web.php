@@ -10,6 +10,9 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\FaceRecognitionController;
 use App\Http\Controllers\AmirLaporanController;
 use App\Http\Controllers\PersetujuanLaporanController;
+use App\Http\Controllers\JenisKegiatanController;
+use App\Http\Controllers\TargetKegiatanController;
+use App\Http\Controllers\AbsensiKegiatanController;
 
 
 Route::get('/', function () {
@@ -43,6 +46,10 @@ Route::middleware(['auth'])->group(function () {
         // Kelola Wilayah & Mahallah
         Route::resource('wilayah', WilayahController::class);
         Route::resource('mahallah', MahallahController::class);
+
+        // Modul M4: Master Jenis Kegiatan & Target Kegiatan
+        Route::resource('jenis-kegiatan', JenisKegiatanController::class)->except(['show']);
+        Route::resource('target-kegiatan', TargetKegiatanController::class)->except(['show']);
     });
 
     // ============================================================
@@ -100,6 +107,15 @@ Route::middleware(['auth'])->group(function () {
         // Absensi Face Recognition
         Route::get('/face/verify', [FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');
         Route::post('/face/verify', [FaceRecognitionController::class, 'verify']);
+    });
+
+    // ============================================================
+    // MODUL M4: ABSENSI KEGIATAN INDIVIDUAL — semua role login bisa akses
+    // ============================================================
+    Route::prefix('kegiatan')->name('absensi-kegiatan.')->group(function () {
+        Route::get('/', [AbsensiKegiatanController::class, 'index'])->name('index');
+        Route::get('/rekam', [AbsensiKegiatanController::class, 'create'])->name('create');
+        Route::post('/rekam', [AbsensiKegiatanController::class, 'store'])->name('store');
     });
 
     // ============================================================

@@ -1,0 +1,191 @@
+@extends('layouts.app')
+
+@section('title', 'Rekam Kegiatan - MARKAZ')
+
+@section('content')
+<div class="max-w-2xl mx-auto animate-in fade-in zoom-in-95 duration-500">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-black text-foreground tracking-tight">Rekam Kegiatan</h1>
+        <p class="text-muted-foreground mt-2">Pilih kegiatan yang baru saja Anda lakukan dan rekam wajah untuk absensi.</p>
+    </div>
+
+    @if(session('error'))
+        <x-alert type="error" message="{{ session('error') }}" />
+    @endif
+
+    <div class="glass-card p-8 rounded-[2rem] shadow-2xl border border-white/60 relative overflow-hidden">
+        {{-- Decorative Elements --}}
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-primary/10 blur-2xl"></div>
+        <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-32 h-32 rounded-full bg-secondary/10 blur-2xl"></div>
+
+        <form action="{{ route('absensi-kegiatan.store') }}" method="POST" id="absensiForm" class="relative z-10 space-y-6">
+            @csrf
+            <input type="hidden" name="photo" id="photo_input" required>
+
+            {{-- Pilihan Kegiatan --}}
+            <div>
+                <label for="jenis_kegiatan_id" class="block text-sm font-bold text-foreground/80 mb-2">Jenis Kegiatan <span class="text-red-500">*</span></label>
+                <select id="jenis_kegiatan_id" name="jenis_kegiatan_id" required
+                        class="w-full px-4 py-3 bg-white/80 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground font-semibold">
+                    <option value="">-- Pilih Jenis Kegiatan --</option>
+                    @foreach($jenisKegiatans as $jenis)
+                        <option value="{{ $jenis->id }}">{{ $jenis->nama_kegiatan }}</option>
+                    @endforeach
+                </select>
+                @error('jenis_kegiatan_id')
+                    <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Face Recognition Area --}}
+            <div class="space-y-4">
+                <div class="relative w-full aspect-[4/3] bg-black/5 rounded-2xl overflow-hidden border-2 border-dashed border-border group flex flex-col items-center justify-center">
+                    
+                    {{-- Video Element for Webcam --}}
+                    <video id="webcam" class="absolute inset-0 w-full h-full object-cover hidden" autoplay playsinline></video>
+                    
+                    {{-- Canvas for Capturing Photo (Hidden) --}}
+                    <canvas id="canvas" class="hidden"></canvas>
+                    
+                    {{-- Image Element to show captured photo --}}
+                    <img id="captured_photo" class="absolute inset-0 w-full h-full object-cover hidden" />
+
+                    {{-- Overlay Placeholder when camera is off --}}
+                    <div id="camera_placeholder" class="text-center p-6 flex flex-col items-center justify-center h-full">
+                        <div class="w-20 h-20 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <p class="text-foreground font-bold text-lg">Kamera Belum Aktif</p>
+                        <p class="text-muted-foreground text-sm mt-1 max-w-xs">Izinkan akses kamera dan posisikan wajah Anda di tengah layar.</p>
+                    </div>
+
+                    {{-- Scanning Overlay (Hidden by default) --}}
+                    <div id="scanning_overlay" class="absolute inset-0 bg-primary/20 backdrop-blur-[2px] hidden flex flex-col items-center justify-center">
+                        <div class="w-16 h-16 border-4 border-white border-t-primary rounded-full animate-spin"></div>
+                        <p class="text-white font-bold mt-4 drop-shadow-md">Memverifikasi Wajah...</p>
+                    </div>
+                </div>
+
+                {{-- Camera Controls --}}
+                <div class="flex gap-3 justify-center">
+                    <button type="button" id="start_camera_btn" class="flex-1 py-3 px-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:bg-secondary/80 transition-all shadow-sm">
+                        Nyalakan Kamera
+                    </button>
+                    <button type="button" id="capture_btn" class="flex-1 py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/30 hidden">
+                        Ambil Foto
+                    </button>
+                    <button type="button" id="retake_btn" class="flex-1 py-3 px-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:bg-secondary/80 transition-all shadow-sm hidden">
+                        Ulangi Foto
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="submit_btn" disabled class="w-full py-4 px-6 bg-emerald-500 text-white text-lg font-black rounded-xl shadow-lg shadow-emerald-500/30 hover:bg-emerald-600 hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none">
+                Verifikasi & Simpan Kegiatan
+            </button>
+            <a href="{{ route('absensi-kegiatan.index') }}" class="block w-full py-3 text-center text-muted-foreground font-semibold hover:text-foreground transition-colors">
+                Batal
+            </a>
+        </form>
+    </div>
+</div>
+
+{{-- Script logic for Camera (Simulated) --}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const photoInput = document.getElementById('photo_input');
+    const capturedPhoto = document.getElementById('captured_photo');
+    const cameraPlaceholder = document.getElementById('camera_placeholder');
+    
+    const startBtn = document.getElementById('start_camera_btn');
+    const captureBtn = document.getElementById('capture_btn');
+    const retakeBtn = document.getElementById('retake_btn');
+    const submitBtn = document.getElementById('submit_btn');
+    const form = document.getElementById('absensiForm');
+    const scanningOverlay = document.getElementById('scanning_overlay');
+    
+    let stream = null;
+
+    // Start Camera
+    startBtn.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            video.srcObject = stream;
+            video.classList.remove('hidden');
+            cameraPlaceholder.classList.add('hidden');
+            startBtn.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+        } catch (err) {
+            alert('Tidak dapat mengakses kamera: ' + err.message);
+        }
+    });
+
+    // Capture Photo
+    captureBtn.addEventListener('click', () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const photoDataUrl = canvas.toDataURL('image/jpeg');
+        photoInput.value = photoDataUrl;
+        
+        capturedPhoto.src = photoDataUrl;
+        capturedPhoto.classList.remove('hidden');
+        video.classList.add('hidden');
+        
+        captureBtn.classList.add('hidden');
+        retakeBtn.classList.remove('hidden');
+        submitBtn.disabled = false;
+        
+        // Stop camera stream to save battery
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+    });
+
+    // Retake Photo
+    retakeBtn.addEventListener('click', async () => {
+        capturedPhoto.classList.add('hidden');
+        photoInput.value = '';
+        retakeBtn.classList.add('hidden');
+        submitBtn.disabled = true;
+        
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+            video.srcObject = stream;
+            video.classList.remove('hidden');
+            captureBtn.classList.remove('hidden');
+        } catch (err) {
+            alert('Tidak dapat mengakses kamera: ' + err.message);
+            startBtn.classList.remove('hidden');
+            cameraPlaceholder.classList.remove('hidden');
+        }
+    });
+
+    // Form Submit
+    form.addEventListener('submit', function(e) {
+        if (!photoInput.value) {
+            e.preventDefault();
+            alert('Silakan ambil foto wajah Anda terlebih dahulu!');
+            return;
+        }
+        
+        const jenisKegiatan = document.getElementById('jenis_kegiatan_id').value;
+        if (!jenisKegiatan) {
+            e.preventDefault();
+            alert('Silakan pilih jenis kegiatan!');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        retakeBtn.disabled = true;
+        scanningOverlay.classList.remove('hidden');
+    });
+});
+</script>
+@endsection

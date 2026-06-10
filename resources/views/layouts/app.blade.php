@@ -66,6 +66,21 @@
                                 Persetujuan Laporan
                             </a>
                         </li>
+                        <li class="pt-2">
+                            <div class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-3 mb-1">Kegiatan</div>
+                        </li>
+                        <li>
+                            <a href="{{ route('jenis-kegiatan.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('jenis-kegiatan*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                Master Kegiatan
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('target-kegiatan.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('target-kegiatan*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                Target Kegiatan
+                            </a>
+                        </li>
                     @elseif(Auth::user()->role === 'pengurus_wilayah')
                         <li>
                             <a href="/peserta" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('peserta*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
@@ -102,6 +117,12 @@
                             <a href="{{ route('amir.laporan.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('amir*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 Laporan Sesi (Amir)
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('absensi-kegiatan.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('kegiatan*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Kegiatan Harian
                             </a>
                         </li>
                     @endif
