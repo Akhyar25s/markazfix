@@ -85,8 +85,8 @@
                     <div class="text-xs text-muted-foreground flex items-center gap-1">
                         Dibuat oleh: <span class="font-medium text-foreground">{{ $jadwal->pembuat->name ?? 'Sistem' }}</span>
                     </div>
-                    <a href="#" class="text-sm font-medium text-primary hover:underline flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                        Detail <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3 w-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <a href="{{ route('jadwal.peserta', $jadwal->id) }}" class="text-sm font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover:translate-x-1 transition-transform bg-primary/10 px-3 py-1.5 rounded-lg">
+                        Peserta & Amir <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                 </div>
             </x-card>

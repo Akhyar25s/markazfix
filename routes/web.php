@@ -37,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/create', [JadwalItikafController::class, 'create'])->name('jadwal.create');
         Route::post('/jadwal', [JadwalItikafController::class, 'store'])->name('jadwal.store');
+        Route::get('/jadwal/{id}/peserta', [JadwalItikafController::class, 'peserta'])->name('jadwal.peserta');
+        Route::post('/jadwal/{id}/peserta/{peserta_id}/jadikan-amir', [JadwalItikafController::class, 'jadikanAmir'])->name('jadwal.jadikan-amir');
 
         // Kelola Wilayah & Mahallah
         Route::resource('wilayah', WilayahController::class);

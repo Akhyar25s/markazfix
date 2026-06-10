@@ -132,4 +132,52 @@ class JadwalItikafController extends Controller
         $jadwal->delete();
         return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil dihapus!');
     }
+
+    /**
+     * Menampilkan daftar peserta pada jadwal tertentu (Untuk Pengurus Inti menunjuk Amir)
+     */
+    public function peserta($id)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $jadwal = JadwalItikaf::with(['pesertas.pengguna.wilayah', 'pesertas.pemilih'])->findOrFail($id);
+        return view('jadwal.peserta', compact('jadwal'));
+    }
+
+    /**
+     * Menunjuk peserta menjadi Amir I'tikaf
+     */
+    public function jadikanAmir(Request $request, $jadwal_id, $peserta_id)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $jadwal = JadwalItikaf::findOrFail($jadwal_id);
+        
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // 1. Reset semua peserta di jadwal ini menjadi bukan amir
+            \App\Models\PesertaItikaf::where('jadwal_itikaf_id', $jadwal_id)
+                ->update(['adalah_amir' => false]);
+
+            // 2. Set peserta terpilih sebagai amir
+            $pesertaTerpilih = \App\Models\PesertaItikaf::where('jadwal_itikaf_id', $jadwal_id)
+                ->where('id', $peserta_id)
+                ->firstOrFail();
+            
+            $pesertaTerpilih->update([
+                'adalah_amir' => true,
+                'dipilih_oleh' => Auth::id()
+            ]);
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Peserta ' . $pesertaTerpilih->pengguna->name . ' berhasil ditunjuk sebagai Amir I\'tikaf.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Gagal menunjuk amir: ' . $e->getMessage());
+        }
+    }
 }
