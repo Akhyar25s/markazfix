@@ -32,6 +32,27 @@ class FaceRecognitionService
      */
     public function enrollFace(User $user, $imageBase64)
     {
+        // ==========================================
+        // MOCK MODE: Bypass AWS Rekognition
+        // ==========================================
+        if (env('USE_MOCK_FACE', false)) {
+            $faceId = 'mock_face_' . uniqid();
+            PendaftaranWajah::updateOrCreate(
+                ['pengguna_id' => $user->id],
+                [
+                    'aws_face_id' => $faceId,
+                    'aws_collection_id' => 'mock_collection',
+                    'status' => 'aktif',
+                    'terdaftar_pada' => now(),
+                ]
+            );
+            return [
+                'success' => true,
+                'message' => 'Wajah berhasil didaftarkan (Mode Simulasi tanpa AWS).',
+                'face_id' => $faceId
+            ];
+        }
+
         try {
             // Remove data:image/jpeg;base64, part if exists
             if (preg_match('/^data:image\/(\w+);base64,/', $imageBase64)) {
@@ -94,6 +115,26 @@ class FaceRecognitionService
      */
     public function verifyFace($imageBase64, $similarityThreshold = 90.0)
     {
+        // ==========================================
+        // MOCK MODE: Bypass AWS Rekognition
+        // ==========================================
+        if (env('USE_MOCK_FACE', false)) {
+            $pendaftaran = PendaftaranWajah::where('status', 'aktif')->latest()->first();
+            if ($pendaftaran) {
+                return [
+                    'success' => true,
+                    'message' => 'Verifikasi wajah berhasil (Mode Simulasi).',
+                    'similarity' => 99.9,
+                    'face_id' => $pendaftaran->aws_face_id,
+                    'user_id' => $pendaftaran->pengguna_id
+                ];
+            }
+            return [
+                'success' => false,
+                'message' => 'Belum ada data wajah terdaftar di sistem simulasi.'
+            ];
+        }
+
         try {
             // Remove data:image/jpeg;base64, part if exists
             if (preg_match('/^data:image\/(\w+);base64,/', $imageBase64)) {
@@ -130,7 +171,8 @@ class FaceRecognitionService
                     'success' => true,
                     'message' => 'Verifikasi wajah berhasil.',
                     'similarity' => $similarity,
-                    'user_id' => $pendaftaran->pengguna_id
+                    'user_id' => $pendaftaran->pengguna_id,
+                    'face_id' => $matchedFaceId // Menambahkan face_id untuk mencegah null di Controller
                 ];
             } else {
                 return [

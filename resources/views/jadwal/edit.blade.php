@@ -50,7 +50,7 @@
                 @enderror
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="space-y-2">
                     <x-label for="tanggal_mulai">Tanggal Mulai <span class="text-red-500">*</span></x-label>
                     <x-input id="tanggal_mulai" name="tanggal_mulai" type="date" value="{{ old('tanggal_mulai', $jadwal->tanggal_mulai->format('Y-m-d')) }}" required />
@@ -63,6 +63,19 @@
                     <x-label for="tanggal_selesai">Tanggal Selesai <span class="text-red-500">*</span></x-label>
                     <x-input id="tanggal_selesai" name="tanggal_selesai" type="date" value="{{ old('tanggal_selesai', $jadwal->tanggal_selesai->format('Y-m-d')) }}" required />
                     @error('tanggal_selesai')
+                        <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="space-y-2">
+                    <x-label for="status">Status Kegiatan <span class="text-red-500">*</span></x-label>
+                    <x-select id="status" name="status" required>
+                        <option value="dijadwalkan" {{ old('status', $jadwal->status) == 'dijadwalkan' ? 'selected' : '' }}>Dijadwalkan</option>
+                        <option value="berlangsung" {{ old('status', $jadwal->status) == 'berlangsung' ? 'selected' : '' }}>Berlangsung</option>
+                        <option value="selesai" {{ old('status', $jadwal->status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                        <option value="dibatalkan" {{ old('status', $jadwal->status) == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+                    </x-select>
+                    @error('status')
                         <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
                     @enderror
                 </div>

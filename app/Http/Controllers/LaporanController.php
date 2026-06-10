@@ -37,7 +37,7 @@ class LaporanController extends Controller
     }
 
     /**
-     * Export laporan ke PDF
+     * Preview laporan PDF di halaman baru untuk di-print
      */
     public function exportPdf($jadwal_id)
     {
@@ -45,68 +45,24 @@ class LaporanController extends Controller
         $absensi = $this->getAbsensiData($jadwal_id);
         $stats   = $this->getStats($jadwal_id, $jadwal);
 
-        $pdf = Pdf::loadView('laporan.pdf', compact('jadwal', 'absensi', 'stats'))
-                  ->setPaper('a4', 'portrait');
-
-        $filename = 'Laporan_Absensi_' . str_replace(' ', '_', $jadwal->nama_itikaf) . '_' . now()->format('Ymd') . '.pdf';
-
-        return $pdf->download($filename);
+        // Jangan gunakan DOMPDF untuk memaksa download, karena browser internal kadang bermasalah.
+        // Tampilkan view HTML dan panggil window.print() di view tersebut.
+        return view('laporan.pdf', compact('jadwal', 'absensi', 'stats'));
     }
 
     /**
-     * Export laporan ke CSV (bisa dibuka di Excel)
+     * Preview laporan Excel di halaman baru
      */
     public function exportCsv($jadwal_id)
     {
         $jadwal  = JadwalItikaf::findOrFail($jadwal_id);
         $absensi = $this->getAbsensiData($jadwal_id);
+        $stats   = $this->getStats($jadwal_id, $jadwal);
 
-        $filename = 'Laporan_Absensi_' . str_replace(' ', '_', $jadwal->nama_itikaf) . '_' . now()->format('Ymd') . '.csv';
-
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function () use ($jadwal, $absensi) {
-            $handle = fopen('php://output', 'w');
-
-            // BOM untuk Excel agar UTF-8 terbaca dengan benar
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-            // Header info
-            fputcsv($handle, ['Laporan Absensi I\'tikaf']);
-            fputcsv($handle, ['Kegiatan', $jadwal->nama_itikaf]);
-            if (Auth::user()->role === 'pengurus_wilayah') {
-                fputcsv($handle, ['Wilayah', Auth::user()->wilayah->nama_wilayah ?? 'Wilayah Anda']);
-            }
-            fputcsv($handle, ['Lokasi', $jadwal->nama_lokasi ?? '-']);
-            fputcsv($handle, ['Tanggal', Carbon::parse($jadwal->tanggal_mulai)->format('d M Y') . ' s/d ' . Carbon::parse($jadwal->tanggal_selesai)->format('d M Y')]);
-            fputcsv($handle, ['Digenerate pada', now()->format('d M Y H:i')]);
-            fputcsv($handle, []); 
-
-            // Header kolom
-            fputcsv($handle, ['No', 'Nama Peserta', 'Email', 'Mahallah/Wilayah', 'Waktu Absen', 'Jarak (m)', 'Status GPS', 'Status Wajah', 'Status Absen']);
-
-            // Data rows
-            foreach ($absensi as $i => $row) {
-                fputcsv($handle, [
-                    $i + 1,
-                    $row->pengguna_name,
-                    $row->pengguna_email,
-                    $row->wilayah_nama ?? '-',
-                    Carbon::parse($row->waktu_absen)->format('d M Y H:i:s'),
-                    $row->jarak_meter ?? '-',
-                    $row->status_gps ?? '-',
-                    $row->status_wajah ?? '-',
-                    $row->status_absen,
-                ]);
-            }
-
-            fclose($handle);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        // Jangan gunakan header attachment agar file terbuka di browser (sebagai halaman web)
+        // Ini sangat berguna jika user menggunakan browser internal IDE yang tidak mendukung download file biner dengan baik.
+        
+        return view('laporan.excel', compact('jadwal', 'absensi', 'stats'));
     }
 
     // ============================================================

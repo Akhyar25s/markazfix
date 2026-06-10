@@ -25,18 +25,14 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard (semua role)
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     // ============================================================
     // PENGURUS INTI ONLY
     // ============================================================
     Route::middleware('role:pengurus_inti')->group(function () {
         // Kelola Jadwal I'tikaf
-        Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');
-        Route::get('/jadwal/create', [JadwalItikafController::class, 'create'])->name('jadwal.create');
-        Route::post('/jadwal', [JadwalItikafController::class, 'store'])->name('jadwal.store');
+        Route::resource('jadwal', JadwalItikafController::class)->except(['show']);
 
         // Kelola Wilayah & Mahallah
         Route::resource('wilayah', WilayahController::class);
@@ -69,6 +65,9 @@ Route::middleware(['auth'])->group(function () {
 
         // API peta (dipakai dashboard)
         Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
+
+        // API face descriptors (dipakai client-side face-api.js)
+        Route::get('/api/face-descriptors', [FaceRecognitionController::class, 'getFaceDescriptors'])->name('face.descriptors');
 
         // Absensi Face Recognition
         Route::get('/face/verify', [FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');

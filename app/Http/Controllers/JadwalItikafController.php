@@ -104,6 +104,7 @@ class JadwalItikafController extends Controller
             'radius_meter' => 'required|integer|min:1',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'status' => 'required|in:dijadwalkan,berlangsung,selesai,dibatalkan',
         ]);
 
         $jadwal->update([
@@ -115,6 +116,7 @@ class JadwalItikafController extends Controller
             'radius_meter' => $request->radius_meter,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'status' => $request->status,
         ]);
 
         return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil diperbarui!');
