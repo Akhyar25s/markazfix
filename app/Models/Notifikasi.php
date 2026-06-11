@@ -10,6 +10,7 @@ class Notifikasi extends Model
     use HasFactory;
 
     protected $table = 'notifikasis';
+    public const UPDATED_AT = null;
 
     protected $fillable = [
         'pengguna_id',
