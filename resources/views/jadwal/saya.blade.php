@@ -1,24 +1,22 @@
 @extends('layouts.app')
 
-@section('title', 'Jadwal I\'tikaf')
+@section('title', 'Jadwal I\'tikaf Saya')
 
 @section('content')
 <div class="space-y-6 animate-fade-in">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="text-3xl font-bold tracking-tight text-foreground">Jadwal I'tikaf</h1>
-            <p class="text-muted-foreground mt-1 text-sm sm:text-base">Kelola dan pantau jadwal pelaksanaan I'tikaf di berbagai Mahallah.</p>
+            <h1 class="text-3xl font-bold tracking-tight text-foreground">Jadwal I'tikaf Saya</h1>
+            <p class="text-muted-foreground mt-1 text-sm sm:text-base">Daftar jadwal kegiatan I'tikaf yang Anda ikuti.</p>
         </div>
-        <a href="{{ route('jadwal.create') }}">
-            <x-button variant="default" class="flex items-center gap-2 shadow-primary/30 shadow-lg hover:shadow-primary/50 hover:scale-105 transition-all">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Buat Jadwal Baru
-            </x-button>
-        </a>
     </div>
 
     @if(session('success'))
         <x-alert type="success" message="{{ session('success') }}" />
+    @endif
+    
+    @if(session('error'))
+        <x-alert type="danger" message="{{ session('error') }}" />
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -81,27 +79,20 @@
                     </div>
                 </div>
                 
-                <div class="p-4 border-t border-border/50 bg-muted/10 flex flex-col gap-2">
-                    {{-- Update Status --}}
-                    <form action="{{ route('jadwal.update-status', $jadwal->id) }}" method="POST" class="flex gap-2">
-                        @csrf
-                        <select name="status" class="flex-1 text-xs border border-input rounded-lg px-2 py-1.5 bg-background text-foreground focus:ring-1 focus:ring-primary outline-none">
-                            <option value="dijadwalkan" {{ $jadwal->status == 'dijadwalkan' ? 'selected' : '' }}>📅 Dijadwalkan</option>
-                            <option value="berlangsung" {{ $jadwal->status == 'berlangsung' ? 'selected' : '' }}>🔵 Berlangsung</option>
-                            <option value="selesai" {{ $jadwal->status == 'selesai' ? 'selected' : '' }}>✅ Selesai</option>
-                            <option value="dibatalkan" {{ $jadwal->status == 'dibatalkan' ? 'selected' : '' }}>❌ Dibatalkan</option>
-                        </select>
-                        <button type="submit" class="text-xs font-semibold text-primary hover:text-primary/80 bg-primary/10 px-3 py-1.5 rounded-lg transition-colors">Simpan</button>
-                    </form>
-                    {{-- Peserta & Hapus --}}
-                    <div class="flex justify-between items-center">
-                        <div class="text-xs text-muted-foreground flex items-center gap-1">
-                            Dibuat: <span class="font-medium text-foreground">{{ $jadwal->pembuat->name ?? 'Sistem' }}</span>
-                        </div>
-                        <a href="{{ route('jadwal.peserta', $jadwal->id) }}" class="text-sm font-bold text-primary hover:text-primary/80 flex items-center gap-1 group-hover:translate-x-1 transition-transform bg-primary/10 px-3 py-1.5 rounded-lg">
-                            Peserta &amp; Amir <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                <div class="p-4 border-t border-border/50 bg-muted/10 flex justify-between items-center">
+                    <span class="text-xs {{ $jadwal->adalah_amir ? 'text-secondary font-bold uppercase tracking-wide' : 'text-muted-foreground' }}">
+                        {{ $jadwal->adalah_amir ? '⭐ Anda Amir Sesi' : 'Peserta' }}
+                    </span>
+                    @if(in_array($jadwal->status, ['berlangsung', 'dijadwalkan']))
+                        <a href="{{ route('face.verify', ['jadwal_id' => $jadwal->id]) }}">
+                            <x-button variant="default" class="h-8 px-3 text-xs flex items-center gap-1">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3.5 w-3.5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                Scan Kehadiran
+                            </x-button>
                         </a>
-                    </div>
+                    @else
+                        <x-button variant="outline" class="h-8 px-3 text-xs opacity-50 cursor-not-allowed" disabled>Selesai/Batal</x-button>
+                    @endif
                 </div>
             </x-card>
         @empty
@@ -109,11 +100,8 @@
                 <div class="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-10 w-10 text-muted-foreground"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </div>
-                <h3 class="text-xl font-bold text-foreground">Belum Ada Jadwal</h3>
-                <p class="text-muted-foreground max-w-md mt-2">Anda belum membuat jadwal i'tikaf apapun. Silakan buat jadwal baru untuk memulai kegiatan.</p>
-                <a href="{{ route('jadwal.create') }}" class="mt-6">
-                    <x-button>Buat Jadwal Sekarang</x-button>
-                </a>
+                <h3 class="text-xl font-bold text-foreground">Tidak Ada Jadwal Terdaftar</h3>
+                <p class="text-muted-foreground max-w-md mt-2">Anda belum terdaftar dalam jadwal I'tikaf aktif mana pun.</p>
             </div>
         @endforelse
     </div>

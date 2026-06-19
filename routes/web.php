@@ -32,6 +32,12 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard (semua role)
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
+    // API peta (dipakai dashboard untuk semua role)
+    Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
+
+    // Jadwal Saya (untuk anggota)
+    Route::get('/jadwal-saya', [\App\Http\Controllers\DashboardController::class, 'jadwalSaya'])->name('jadwal.saya');
+
     // ============================================================
     // PENGURUS INTI ONLY
     // ============================================================
@@ -40,12 +46,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/create', [JadwalItikafController::class, 'create'])->name('jadwal.create');
         Route::post('/jadwal', [JadwalItikafController::class, 'store'])->name('jadwal.store');
+        Route::post('/jadwal/{id}/update-status', [JadwalItikafController::class, 'updateStatus'])->name('jadwal.update-status');
+        Route::delete('/jadwal/{jadwal}', [JadwalItikafController::class, 'destroy'])->name('jadwal.destroy');
         Route::get('/jadwal/{id}/peserta', [JadwalItikafController::class, 'peserta'])->name('jadwal.peserta');
         Route::post('/jadwal/{id}/peserta/{peserta_id}/jadikan-amir', [JadwalItikafController::class, 'jadikanAmir'])->name('jadwal.jadikan-amir');
 
         // Kelola Wilayah & Mahallah
         Route::resource('wilayah', WilayahController::class);
-        Route::resource('mahallah', MahallahController::class);
+        Route::resource('mahallah', MahallahController::class)->except(['show']);
 
         // Modul M4: Master Jenis Kegiatan & Target Kegiatan
         Route::resource('jenis-kegiatan', JenisKegiatanController::class)->except(['show']);
@@ -101,10 +109,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/laporan/{id}/export-pdf', [LaporanController::class, 'exportPdf'])->name('laporan.export-pdf');
         Route::get('/laporan/{id}/export-csv', [LaporanController::class, 'exportCsv'])->name('laporan.export-csv');
 
-        // API peta (dipakai dashboard)
-        Route::get('/api/mahallah-map', [MahallahController::class, 'getMapData'])->name('mahallah.map');
+        // Detail Mahallah
+        Route::get('/mahallah/{mahallah}', [MahallahController::class, 'show'])->name('mahallah.show');
+    });
 
-        // Absensi Face Recognition
+    // Absensi Face Recognition
+    Route::middleware('role:pengurus_inti,pengurus_wilayah,anggota')->group(function () {
         Route::get('/face/verify', [FaceRecognitionController::class, 'showVerificationForm'])->name('face.verify');
         Route::post('/face/verify', [FaceRecognitionController::class, 'verify']);
     });

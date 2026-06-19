@@ -13,7 +13,11 @@
 <div class="space-y-6 animate-fade-in">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-4">
-            <a href="{{ route('mahallah.index') }}" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors">
+            @if(Auth::user()->role === 'pengurus_inti')
+                <a href="{{ route('mahallah.index') }}" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors">
+            @else
+                <a href="/dashboard" class="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors">
+            @endif
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <div>
@@ -21,6 +25,7 @@
                 <p class="text-muted-foreground mt-1 text-sm sm:text-base">Informasi lengkap mengenai {{ $mahallah->nama_mahallah }}.</p>
             </div>
         </div>
+        @if(Auth::user()->role === 'pengurus_inti')
         <div class="flex gap-2">
             <a href="{{ route('mahallah.edit', $mahallah->id) }}">
                 <x-button variant="default" class="flex items-center gap-2 shadow-primary/30 shadow-lg">
@@ -29,6 +34,7 @@
                 </x-button>
             </a>
         </div>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -50,10 +56,14 @@
                     <div>
                         <div class="text-sm text-muted-foreground mb-1">Wilayah Induk</div>
                         @if($mahallah->wilayah)
-                            <a href="{{ route('wilayah.show', $mahallah->wilayah->id) }}" class="inline-flex items-center gap-1 font-medium text-primary hover:underline">
-                                {{ $mahallah->wilayah->nama_wilayah }}
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            </a>
+                            @if(Auth::user()->role === 'pengurus_inti')
+                                <a href="{{ route('wilayah.show', $mahallah->wilayah->id) }}" class="inline-flex items-center gap-1 font-medium text-primary hover:underline">
+                                    {{ $mahallah->wilayah->nama_wilayah }}
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                </a>
+                            @else
+                                <span class="font-medium text-foreground">{{ $mahallah->wilayah->nama_wilayah }}</span>
+                            @endif
                         @else
                             <div class="text-sm text-muted-foreground italic">Tidak ada wilayah</div>
                         @endif
@@ -102,6 +112,40 @@
             </x-card>
         </div>
     </div>
+
+    <!-- Daftar Anggota Mahallah -->
+    <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg p-0 overflow-hidden">
+        <x-slot name="header">
+            <div class="flex justify-between items-center p-6 border-b border-border">
+                <h3 class="text-lg font-semibold tracking-tight">Daftar Anggota (Jamaah)</h3>
+                <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">{{ $mahallah->users->count() }} Orang</span>
+            </div>
+        </x-slot>
+        
+        <div class="overflow-x-auto">
+            <x-table :headers="['No', 'Nama Lengkap', 'Email', 'No. Telepon', 'Status']">
+                @forelse($mahallah->users as $index => $anggota)
+                <tr class="border-b border-border transition-colors hover:bg-muted/50">
+                    <td class="p-4 align-middle text-muted-foreground">{{ $index + 1 }}</td>
+                    <td class="p-4 align-middle font-semibold text-foreground">{{ $anggota->name }}</td>
+                    <td class="p-4 align-middle text-muted-foreground">{{ $anggota->email }}</td>
+                    <td class="p-4 align-middle text-muted-foreground">{{ $anggota->no_telepon ?: '-' }}</td>
+                    <td class="p-4 align-middle">
+                        @if($anggota->status === 'aktif')
+                            <x-badge variant="success" class="bg-green-500/10 text-green-500 border-green-500/20">Aktif</x-badge>
+                        @else
+                            <x-badge variant="danger" class="bg-red-500/10 text-red-500 border-red-500/20">Nonaktif</x-badge>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" class="p-8 text-center text-muted-foreground">Belum ada anggota yang terdaftar di mahallah ini.</td>
+                </tr>
+                @endforelse
+            </x-table>
+        </div>
+    </x-card>
 </div>
 @endsection
 

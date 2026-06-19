@@ -11,10 +11,32 @@ use App\Services\NotifikasiService;
 class JadwalItikafController extends Controller
 {
     /**
+     * Auto-sync status jadwal berdasarkan tanggal (dipanggil setiap kali index diakses)
+     */
+    private function syncStatusOtomatis(): void
+    {
+        $today = now()->startOfDay();
+
+        // Ubah jadi 'berlangsung' jika tanggal mulai sudah lewat & belum selesai
+        JadwalItikaf::where('status', 'dijadwalkan')
+            ->where('tanggal_mulai', '<=', $today)
+            ->where('tanggal_selesai', '>=', $today)
+            ->update(['status' => 'berlangsung']);
+
+        // Ubah jadi 'selesai' jika tanggal selesai sudah lewat
+        JadwalItikaf::whereIn('status', ['dijadwalkan', 'berlangsung'])
+            ->where('tanggal_selesai', '<', $today)
+            ->update(['status' => 'selesai']);
+    }
+
+    /**
      * Menampilkan daftar jadwal i'tikaf
      */
     public function index()
     {
+        // Jalankan auto-sync status setiap halaman dimuat
+        $this->syncStatusOtomatis();
+
         // Jika pengurus inti, tampilkan semua jadwal
         if (Auth::user()->role === 'pengurus_inti') {
             $jadwals = JadwalItikaf::with(['pembuat'])->orderBy('tanggal_mulai', 'desc')->get();
@@ -23,6 +45,25 @@ class JadwalItikafController extends Controller
         
         // Selain itu, tolak akses (sementara kembali ke dashboard)
         return redirect('/dashboard')->with('error', 'Akses ditolak.');
+    }
+
+    /**
+     * Update status jadwal secara manual oleh pengurus inti
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $request->validate([
+            'status' => 'required|in:dijadwalkan,berlangsung,selesai,dibatalkan',
+        ]);
+
+        $jadwal = JadwalItikaf::findOrFail($id);
+        $jadwal->update(['status' => $request->status]);
+
+        return back()->with('success', 'Status jadwal berhasil diperbarui menjadi "' . $request->status . '".');
     }
 
     /**

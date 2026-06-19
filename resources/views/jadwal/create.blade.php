@@ -30,7 +30,7 @@
     <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl relative overflow-hidden">
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
         
-        <form action="{{ route('jadwal.store') }}" method="POST" class="space-y-6 relative z-10">
+        <form action="{{ route('jadwal.store') }}" method="POST" class="space-y-6 relative z-10" onsubmit="const btn = this.querySelector('button[type=submit]'); btn.innerHTML = 'Simpan Jadwal...'; setTimeout(() => btn.disabled = true, 50);">
             @csrf
 
             <div class="space-y-2">

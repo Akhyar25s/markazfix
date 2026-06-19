@@ -293,19 +293,18 @@
 <style>
     /* Leaflet popup customization to match glassmorphism theme */
     .leaflet-popup-content-wrapper {
-        background-color: rgba(var(--card), 0.9);
+        background-color: var(--popover) !important;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
-        color: hsl(var(--foreground));
-        border: 1px solid rgba(var(--border), 0.5);
+        color: var(--foreground) !important;
+        border: 1px solid var(--border);
         border-radius: 1rem;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
         padding: 0;
         overflow: hidden;
     }
     .leaflet-popup-tip {
-        background-color: rgba(var(--card), 0.9);
-        backdrop-filter: blur(12px);
+        background-color: var(--popover) !important;
     }
     .leaflet-popup-content {
         margin: 0;
@@ -314,14 +313,14 @@
     .leaflet-container a.leaflet-popup-close-button {
         top: 10px;
         right: 10px;
-        color: hsl(var(--muted-foreground));
+        color: var(--muted-foreground) !important;
         width: 24px;
         height: 24px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: rgba(var(--muted), 0.5);
+        background: var(--muted) !important;
         transition: all 0.2s ease;
     }
     .leaflet-container a.leaflet-popup-close-button:hover {
@@ -350,6 +349,9 @@
 <script src="{{ asset('js/map-utils.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const userWilayah = "{{ Auth::user()->wilayah ? Auth::user()->wilayah->nama_wilayah : '' }}";
+        const userRole = "{{ Auth::user()->role }}";
+
         // Initialize map using Utility, centered on Indonesia
         const map = MarkazMap.init('mahallah-map', [-2.5489, 118.0149], 5);
 
@@ -441,8 +443,14 @@
                     }
                 }
 
-                // Initial render
-                renderMarkers(mahallahData);
+                // Initial render: default filter to user's wilayah if they are regional admin
+                if (userRole === 'pengurus_wilayah' && userWilayah) {
+                    filterSelect.value = userWilayah;
+                    const filteredData = mahallahData.filter(m => m.wilayah === userWilayah);
+                    renderMarkers(filteredData);
+                } else {
+                    renderMarkers(mahallahData);
+                }
                 
                 // Hide loading overlay
                 setTimeout(() => {

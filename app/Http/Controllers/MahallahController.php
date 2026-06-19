@@ -50,7 +50,9 @@ class MahallahController extends Controller
      */
     public function show(Mahallah $mahallah)
     {
-        $mahallah->load('wilayah');
+        $mahallah->load(['wilayah', 'users' => function($query) {
+            $query->where('role', 'anggota');
+        }]);
         return view('mahallah.show', compact('mahallah'));
     }
 

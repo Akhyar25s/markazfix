@@ -9,7 +9,10 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @stack('styles')
 </head>
-<body class="bg-background text-foreground antialiased min-h-screen flex selection:bg-primary/30" x-data="{ sidebarOpen: true }">
+<body class="bg-background text-foreground antialiased min-h-screen flex selection:bg-primary/30" x-data="{ sidebarOpen: window.innerWidth >= 768 }">
+    
+    <!-- Sidebar Mobile Backdrop -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity md:hidden" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
     
     <!-- Sidebar -->
     <aside :class="sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'" class="fixed inset-y-0 left-0 z-50 flex flex-col glass border-r transition-all duration-500 ease-in-out md:relative md:translate-x-0 shadow-lg" x-show="true">
@@ -23,6 +26,12 @@
                 </div>
                 <span class="text-gradient">MARKAZ</span>
             </a>
+            <!-- Mobile Close Button inside Sidebar -->
+            <button @click="sidebarOpen = false" class="absolute right-4 top-1/2 -translate-y-1/2 md:hidden text-muted-foreground hover:text-primary p-1.5 bg-white/50 hover:bg-white rounded-lg z-20 transition-all shadow-sm">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
         </div>
         <nav class="flex-1 overflow-y-auto py-6 px-4">
             <div class="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Menu Utama</div>
@@ -102,13 +111,13 @@
                         </li>
                     @else
                         <li>
-                            <a href="#" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm">
+                            <a href="{{ route('jadwal.saya') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('jadwal-saya') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                                 Jadwal Saya
                             </a>
                         </li>
                         <li>
-                            <a href="#" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm">
+                            <a href="{{ route('face.verify') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('face/verify') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 Scan Kehadiran
                             </a>

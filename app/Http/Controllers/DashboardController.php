@@ -12,6 +12,9 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // Auto-sync status jadwal setiap kali dashboard dibuka
+        $this->syncStatusOtomatis();
+
         $user = Auth::user();
 
         if ($user->role === 'pengurus_inti') {
@@ -217,5 +220,41 @@ class DashboardController extends Controller
             'itikafDijadwalkan',
             'progressKegiatan'
         ));
+    }
+
+    public function jadwalSaya()
+    {
+        // Auto-sync sebelum ambil data jadwal
+        $this->syncStatusOtomatis();
+
+        $user = Auth::user();
+
+        $jadwals = DB::table('peserta_itikafs as p')
+            ->join('jadwal_itikafs as j', 'j.id', '=', 'p.jadwal_itikaf_id')
+            ->where('p.pengguna_id', $user->id)
+            ->orderBy('j.tanggal_mulai', 'desc')
+            ->select('j.*', 'p.adalah_amir')
+            ->get();
+
+        return view('jadwal.saya', compact('jadwals'));
+    }
+
+    /**
+     * Auto-sync status jadwal berdasarkan tanggal
+     */
+    private function syncStatusOtomatis(): void
+    {
+        $today = now()->startOfDay();
+
+        // Ubah jadi 'berlangsung' jika tanggal mulai sudah lewat & masih dalam rentang
+        \App\Models\JadwalItikaf::where('status', 'dijadwalkan')
+            ->where('tanggal_mulai', '<=', $today)
+            ->where('tanggal_selesai', '>=', $today)
+            ->update(['status' => 'berlangsung']);
+
+        // Ubah jadi 'selesai' jika tanggal selesai sudah lewat
+        \App\Models\JadwalItikaf::whereIn('status', ['dijadwalkan', 'berlangsung'])
+            ->where('tanggal_selesai', '<', $today)
+            ->update(['status' => 'selesai']);
     }
 }
