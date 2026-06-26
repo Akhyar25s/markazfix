@@ -28,40 +28,47 @@ class AuthController extends Controller
     {
         // 1. Validasi Input
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'no_telepon' => 'required|string|max:20',
-            'password' => 'required|string|min:8',
-            'wilayah_id' => 'nullable|exists:wilayahs,id',
-            'mahallah_id' => 'nullable|exists:mahallahs,id',
-            'jenis_kelamin' => 'required|in:L,P',
-            'tanggal_lahir' => 'required|date',
-            'foto_wajah_depan' => 'required|string',
-            'foto_wajah_kiri' => 'required|string',
-            'foto_wajah_kanan' => 'required|string',
+            'name'              => 'required|string|max:255',
+            'email'             => 'required|string|email|max:255|unique:users',
+            'no_telepon'        => 'required|string|max:20',
+            'password'          => 'required|string|min:8',
+            'umur'              => 'required|integer|min:1|max:120',
+            'wilayah_id'        => 'nullable',
+            'asal_daerah'       => 'nullable|string|max:255',
+            'mahallah_id'       => 'nullable|exists:mahallahs,id',
+            'foto_wajah_depan'  => 'required|string',
+            'foto_wajah_kiri'   => 'required|string',
+            'foto_wajah_kanan'  => 'required|string',
         ]);
+
+        // Tentukan wilayah_id: jika pilih "lainnya", cari wilayah Tamu
+        $wilayahId = $request->wilayah_id;
+        if ($wilayahId === 'lainnya' || empty($wilayahId)) {
+            $wilayahTamu = \App\Models\Wilayah::where('nama_wilayah', 'Tamu')->first();
+            $wilayahId = $wilayahTamu ? $wilayahTamu->id : null;
+        }
 
         try {
             DB::beginTransaction();
 
             // 2. Buat User (Akun)
             $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'no_telepon' => $request->no_telepon,
-                'password' => Hash::make($request->password),
-                'jenis_kelamin' => $request->jenis_kelamin,
-                'tanggal_lahir' => $request->tanggal_lahir,
-                'wilayah_id' => $request->wilayah_id,
+                'name'        => $request->name,
+                'email'       => $request->email,
+                'no_telepon'  => $request->no_telepon,
+                'password'    => Hash::make($request->password),
+                'umur'        => $request->umur,
+                'asal_daerah' => $request->asal_daerah,
+                'wilayah_id'  => $wilayahId,
                 'mahallah_id' => $request->mahallah_id,
-                'role' => 'anggota',
-                'status' => 'aktif',
+                'role'        => 'anggota',
+                'status'      => 'aktif',
             ]);
 
             // 3. Proses Foto Wajah (3 Sudut)
             $angles = [
                 'depan' => $request->foto_wajah_depan,
-                'kiri' => $request->foto_wajah_kiri,
+                'kiri'  => $request->foto_wajah_kiri,
                 'kanan' => $request->foto_wajah_kanan
             ];
 
@@ -73,8 +80,8 @@ class AuthController extends Controller
                 }
                 
                 $imageTypeAux = explode("image/", $imageParts[0]);
-                $imageType = $imageTypeAux[1];
-                $imageBase64 = base64_decode($imageParts[1]);
+                $imageType    = $imageTypeAux[1];
+                $imageBase64  = base64_decode($imageParts[1]);
 
                 $fileName = 'temp_face_' . $angleName . '_' . uniqid() . '.' . $imageType;
                 $tempPath = 'temp_faces/' . $fileName;
@@ -97,10 +104,10 @@ class AuthController extends Controller
 
                 // 4. Catat ke tabel pendaftaran_wajahs
                 PendaftaranWajah::create([
-                    'pengguna_id' => $user->id,
-                    'aws_face_id' => $faceData['FaceId'],
+                    'pengguna_id'       => $user->id,
+                    'aws_face_id'       => $faceData['FaceId'],
                     'aws_collection_id' => env('AWS_REKOGNITION_COLLECTION_ID', 'markaz_faces'),
-                    'status' => 'aktif'
+                    'status'            => 'aktif'
                 ]);
 
                 // Hapus file sementara setelah selesai diproses

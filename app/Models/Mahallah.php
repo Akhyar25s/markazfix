@@ -14,6 +14,7 @@ class Mahallah extends Model
     protected $fillable = [
         'nama_mahallah',
         'alamat',
+        'foto',
         'latitude',
         'longitude',
         'wilayah_id',

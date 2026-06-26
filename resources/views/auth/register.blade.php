@@ -60,17 +60,8 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label for="jenis_kelamin" class="block text-sm font-bold text-foreground/80 pl-1">Jenis Kelamin *</label>
-                        <select id="jenis_kelamin" name="jenis_kelamin" required class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
-                            <option value="">Pilih Jenis Kelamin</option>
-                            <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki (Ikhwan)</option>
-                            <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan (Akhwat)</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label for="tanggal_lahir" class="block text-sm font-bold text-foreground/80 pl-1">Tanggal Lahir *</label>
-                        <input type="date" id="tanggal_lahir" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                        <label for="umur" class="block text-sm font-bold text-foreground/80 pl-1">Umur *</label>
+                        <input type="number" id="umur" name="umur" value="{{ old('umur') }}" required min="1" max="120" placeholder="Contoh: 25" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all placeholder:text-muted-foreground/50 text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
                     </div>
 
                     <div class="space-y-1">
@@ -87,14 +78,22 @@
                     Lokasi & Organisasi
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div class="space-y-1">
+                    <div class="space-y-1 md:col-span-2">
                         <label for="wilayah_id" class="block text-sm font-bold text-foreground/80 pl-1">Halaqah Wilayah</label>
-                        <select id="wilayah_id" name="wilayah_id" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                        <select id="wilayah_id" name="wilayah_id" onchange="toggleAsalDaerah(this)" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
                             <option value="">Pilih Wilayah (Opsional)</option>
-                            @foreach(\App\Models\Wilayah::all() as $wilayah)
+                            @foreach(\App\Models\Wilayah::where('nama_wilayah', '!=', 'Tamu')->get() as $wilayah)
                                 <option value="{{ $wilayah->id }}" {{ old('wilayah_id') == $wilayah->id ? 'selected' : '' }}>{{ $wilayah->nama_wilayah }}</option>
                             @endforeach
+                            <option value="lainnya" {{ old('wilayah_id') == 'lainnya' ? 'selected' : '' }}>🌍 Lainnya (Luar Daerah / Tamu)</option>
                         </select>
+                    </div>
+
+                    {{-- Input Asal Daerah muncul hanya jika pilih "Lainnya" --}}
+                    <div id="asal-daerah-wrapper" class="md:col-span-2 {{ old('wilayah_id') == 'lainnya' ? '' : 'hidden' }} space-y-1 transition-all">
+                        <label for="asal_daerah" class="block text-sm font-bold text-foreground/80 pl-1">Asal Daerah *</label>
+                        <input type="text" id="asal_daerah" name="asal_daerah" value="{{ old('asal_daerah') }}" placeholder="Contoh: Yaman, Kalimantan Timur, dll." class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all placeholder:text-muted-foreground/50 text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                        <p class="text-xs text-muted-foreground pl-1 mt-1">Isi asal daerah Anda secara lengkap karena tidak ada di daftar wilayah.</p>
                     </div>
 
                     <div class="space-y-1">
@@ -299,6 +298,22 @@
                 alert('Anda harus mengambil 3 foto wajah secara berurutan terlebih dahulu!');
             }
         });
+
+        // Toggle input asal daerah
+        function toggleAsalDaerah(select) {
+            const wrapper = document.getElementById('asal-daerah-wrapper');
+            const input = document.getElementById('asal_daerah');
+            if (select.value === 'lainnya') {
+                wrapper.classList.remove('hidden');
+                input.required = true;
+            } else {
+                wrapper.classList.add('hidden');
+                input.required = false;
+                input.value = '';
+            }
+        }
+        // Expose global
+        window.toggleAsalDaerah = toggleAsalDaerah;
     </script>
 </body>
 </html>

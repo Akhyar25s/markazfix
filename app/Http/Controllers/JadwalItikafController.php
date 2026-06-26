@@ -240,4 +240,23 @@ class JadwalItikafController extends Controller
             return back()->with('error', 'Gagal menunjuk amir: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Menghapus peserta dari jadwal i'tikaf (oleh Pengurus Inti)
+     */
+    public function hapusPeserta($jadwal_id, $peserta_id)
+    {
+        if (Auth::user()->role !== 'pengurus_inti') {
+            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $peserta = \App\Models\PesertaItikaf::where('jadwal_itikaf_id', $jadwal_id)
+            ->where('id', $peserta_id)
+            ->firstOrFail();
+
+        $namaPeserta = $peserta->pengguna->name ?? 'Peserta';
+        $peserta->delete();
+
+        return back()->with('success', 'Peserta "' . $namaPeserta . '" berhasil dihapus dari daftar.');
+    }
 }

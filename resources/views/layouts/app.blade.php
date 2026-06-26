@@ -90,6 +90,13 @@
                                 Target Kegiatan
                             </a>
                         </li>
+                         </li>
+                        <li>
+                            <a href="{{ route('tamu.create') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('tamu*') ? 'bg-blue-600 text-white shadow-md scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                                Daftarkan Tamu
+                            </a>
+                        </li>
                     @elseif(Auth::user()->role === 'pengurus_wilayah')
                         <li>
                             <a href="/peserta" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('peserta*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
@@ -107,6 +114,13 @@
                             <a href="{{ route('persetujuan.index') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('persetujuan-laporan*') ? 'bg-primary text-white shadow-md shadow-primary/20 scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Persetujuan Laporan
+                            </a>
+                        </li>
+                        </li>
+                        <li>
+                            <a href="{{ route('tamu.create') }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-300 {{ request()->is('tamu*') ? 'bg-blue-600 text-white shadow-md scale-[1.02]' : 'text-muted-foreground hover:bg-white/50 hover:text-primary hover:shadow-sm' }}">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                                Daftarkan Tamu
                             </a>
                         </li>
                     @else
@@ -179,7 +193,12 @@
 
                 <div class="text-right hidden sm:block">
                     <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
-                    <div class="text-xs font-medium text-secondary capitalize">{{ str_replace('_', ' ', Auth::user()->role) }}</div>
+                    <div class="text-xs font-medium text-secondary capitalize flex items-center gap-1 justify-end">
+                        {{ str_replace('_', ' ', Auth::user()->role) }}
+                        @if(Auth::user()->status === 'tamu')
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold text-[9px] border border-blue-200">TAMU</span>
+                        @endif
+                    </div>
                 </div>
                 <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 shadow-sm">
                     <span class="font-bold text-primary">{{ substr(Auth::user()->name, 0, 1) }}</span>

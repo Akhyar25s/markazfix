@@ -28,7 +28,7 @@
     @endif
 
     <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-xl">
-        <form action="{{ route('mahallah.update', $mahallah->id) }}" method="POST" class="space-y-6">
+        <form action="{{ route('mahallah.update', $mahallah->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
 
@@ -63,6 +63,35 @@
                 @enderror
             </div>
 
+            <!-- Foto Upload -->
+            <div class="space-y-2">
+                <x-label for="foto">Foto Tempat Ibadah</x-label>
+                @if($mahallah->foto)
+                <div id="foto-preview-container" class="mb-3">
+                    <img id="foto-preview" src="{{ asset('storage/' . $mahallah->foto) }}" class="w-full max-h-48 object-cover rounded-xl border border-border shadow-sm" alt="Foto Mahallah">
+                    <p class="text-xs text-muted-foreground mt-1">Foto saat ini. Upload file baru untuk menggantikannya.</p>
+                </div>
+                @else
+                <div id="foto-preview-container" class="hidden mb-3">
+                    <img id="foto-preview" src="" class="w-full max-h-48 object-cover rounded-xl border border-border shadow-sm" alt="Preview Foto">
+                    <button type="button" onclick="hapusFoto()" class="mt-2 text-xs text-red-500 hover:underline">Hapus foto</button>
+                </div>
+                @endif
+                <div class="border-2 border-dashed border-border/60 rounded-xl p-5 text-center hover:border-primary/40 transition-colors bg-white/20 cursor-pointer">
+                    <input type="file" id="foto" name="foto" accept="image/*" class="hidden" onchange="previewFoto(this)">
+                    <label for="foto" class="cursor-pointer flex flex-col items-center gap-2">
+                        <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-primary">{{ $mahallah->foto ? 'Upload Foto Baru' : 'Klik untuk upload foto' }}</span>
+                        <span class="text-xs text-muted-foreground">JPG, PNG, GIF, WebP (Maks. 5MB)</span>
+                    </label>
+                </div>
+                @error('foto')
+                    <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Map Picker Section -->
             <div class="space-y-3">
                 <x-label>Lokasi di Peta <span class="text-red-500">*</span></x-label>
@@ -76,10 +105,17 @@
                 
                 <div id="map" class="border border-border shadow-inner"></div>
                 
-                <div class="hidden">
-                    <x-input id="latitude" name="latitude" type="hidden" value="{{ old('latitude', $mahallah->latitude) }}" />
-                    <x-input id="longitude" name="longitude" type="hidden" value="{{ old('longitude', $mahallah->longitude) }}" />
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div class="space-y-1">
+                        <x-label for="latitude">Latitude</x-label>
+                        <x-input id="latitude" name="latitude" type="number" step="any" placeholder="Contoh: -3.3194" value="{{ old('latitude', $mahallah->latitude) }}" />
+                    </div>
+                    <div class="space-y-1">
+                        <x-label for="longitude">Longitude</x-label>
+                        <x-input id="longitude" name="longitude" type="number" step="any" placeholder="Contoh: 114.5908" value="{{ old('longitude', $mahallah->longitude) }}" />
+                    </div>
                 </div>
+                <p class="text-xs text-muted-foreground mt-1">💡 Anda bisa klik di peta atau isi koordinat secara manual (ambil dari Google Maps).</p>
             </div>
 
             <div class="space-y-2">
@@ -224,5 +260,41 @@
         });
     });
 </script>
-@endpush
+<script>
+function previewFoto(input) {
+    const container = document.getElementById('foto-preview-container');
+    const preview = document.getElementById('foto-preview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            container.classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
 
+function hapusFoto() {
+    document.getElementById('foto').value = '';
+    document.getElementById('foto-preview-container').classList.add('hidden');
+    document.getElementById('foto-preview').src = '';
+}
+
+// Sync input lat/lng manual dengan peta
+document.addEventListener('DOMContentLoaded', function() {
+    const latInput = document.getElementById('latitude');
+    const lngInput = document.getElementById('longitude');
+    function syncFromInputs() {
+        const lat = parseFloat(latInput.value);
+        const lng = parseFloat(lngInput.value);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            if (typeof moveMarker !== 'undefined') {
+                moveMarker(L.latLng(lat, lng));
+            }
+        }
+    }
+    if (latInput) latInput.addEventListener('change', syncFromInputs);
+    if (lngInput) lngInput.addEventListener('change', syncFromInputs);
+});
+</script>
+@endpush

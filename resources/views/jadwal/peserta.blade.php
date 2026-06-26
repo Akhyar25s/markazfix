@@ -63,7 +63,12 @@
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shrink-0">
                                     <span class="text-xs font-bold text-primary">{{ substr($peserta->pengguna->name ?? '?', 0, 1) }}</span>
                                 </div>
-                                <div class="font-bold text-foreground">{{ $peserta->pengguna->name ?? 'Data Terhapus' }}</div>
+                                <div>
+                                    <div class="font-bold text-foreground">{{ $peserta->pengguna->name ?? 'Data Terhapus' }}</div>
+                                    @if($peserta->pengguna && $peserta->pengguna->status === 'tamu')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold text-[10px] border border-blue-200 mt-0.5">🌍 Tamu</span>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-muted-foreground">
@@ -80,20 +85,34 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 text-right">
-                            @if(!$peserta->adalah_amir)
-                            <form action="{{ route('jadwal.jadikan-amir', ['id' => $jadwal->id, 'peserta_id' => $peserta->id]) }}" method="POST">
-                                @csrf
-                                <button type="submit" 
-                                        onclick="return confirm('Tunjuk {{ $peserta->pengguna->name }} sebagai Amir I\'tikaf? Amir sebelumnya (jika ada) akan kembali menjadi peserta biasa.')"
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-border text-sm font-bold text-foreground rounded-xl hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
-                                    <span>👑</span> Jadikan Amir
+                            <div class="flex items-center justify-end gap-2">
+                                @if(!$peserta->adalah_amir)
+                                <form action="{{ route('jadwal.jadikan-amir', ['id' => $jadwal->id, 'peserta_id' => $peserta->id]) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" 
+                                            onclick="return confirm('Tunjuk {{ $peserta->pengguna->name }} sebagai Amir I\'tikaf? Amir sebelumnya (jika ada) akan kembali menjadi peserta biasa.')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-border text-xs font-bold text-foreground rounded-xl hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
+                                        <span>👑</span> Jadikan Amir
+                                    </button>
+                                </form>
+                                @else
+                                <button disabled class="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 border border-gray-200 text-xs font-bold text-gray-400 rounded-xl cursor-not-allowed">
+                                    Sedang Menjabat
                                 </button>
-                            </form>
-                            @else
-                            <button disabled class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 text-sm font-bold text-gray-400 rounded-xl cursor-not-allowed">
-                                Sedang Menjabat
-                            </button>
-                            @endif
+                                @endif
+
+                                {{-- Tombol Hapus --}}
+                                <form action="{{ route('jadwal.hapus-peserta', ['id' => $jadwal->id, 'peserta_id' => $peserta->id]) }}" method="POST"
+                                      onsubmit="return confirm('Hapus {{ addslashes($peserta->pengguna->name ?? "peserta ini") }} dari daftar? Tindakan ini tidak dapat dibatalkan.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-red-50 border border-red-200 text-xs font-bold text-red-600 rounded-xl hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        Hapus
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @empty

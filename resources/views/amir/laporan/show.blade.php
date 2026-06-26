@@ -47,74 +47,112 @@
         <p class="text-sm text-muted-foreground mb-4">Klik tombol "Buat Laporan Sesi Baru" untuk membuat laporan pertama Anda.</p>
     </div>
     @else
-    <div class="space-y-4">
-        @foreach($laporan as $item)
+    @php
+        // Kelompokkan laporan per tanggal
+        $laporanPerHari = $laporan->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->waktu_mulai)->format('Y-m-d');
+        })->sortKeys();
+
+        $tanggalMulai = \Carbon\Carbon::parse($jadwal->tanggal_mulai);
+
+        $sesiIcon = [
+            'Bayan Subuh'   => '🌅',
+            'Talim Pagi'    => '☀️',
+            'Talim Zhuhur'  => '🕛',
+            'Talim Ashar'   => '🕓',
+            'Bayan Maghrib' => '🌇',
+            'Talim Akhir'   => '🌙',
+        ];
+    @endphp
+    <div class="space-y-8">
+        @foreach($laporanPerHari as $tanggal => $items)
         @php
-            $statusConfig = match($item->status) {
-                'draft'                => ['label' => 'Draft', 'class' => 'bg-gray-100 text-gray-600', 'icon' => 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'],
-                'menunggu_wilayah'     => ['label' => 'Menunggu Wilayah', 'class' => 'bg-yellow-100 text-yellow-700', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-                'dikembalikan_wilayah' => ['label' => 'Dikembalikan (Revisi)', 'class' => 'bg-orange-100 text-orange-700', 'icon' => 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6'],
-                'menunggu_inti'        => ['label' => 'Menunggu Pengurus Inti', 'class' => 'bg-blue-100 text-blue-700', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
-                'dikembalikan_inti'    => ['label' => 'Dikembalikan (Inti)', 'class' => 'bg-orange-100 text-orange-700', 'icon' => 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6'],
-                'disetujui'            => ['label' => 'Disetujui ✓', 'class' => 'bg-emerald-100 text-emerald-700', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
-                default                => ['label' => $item->status, 'class' => 'bg-gray-100 text-gray-600', 'icon' => 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-            };
+            $hariKe = $tanggalMulai->diffInDays(\Carbon\Carbon::parse($tanggal)) + 1;
+            $tglFormatted = \Carbon\Carbon::parse($tanggal)->translatedFormat('l, d M Y');
         @endphp
-        <div class="glass-card p-6 rounded-2xl border border-white/60 transition-all hover:shadow-md">
-            <div class="flex items-start justify-between gap-4 flex-wrap">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-3 flex-wrap mb-2">
-                        <h3 class="font-bold text-foreground text-lg">{{ $item->nama_sesi }}</h3>
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full {{ $statusConfig['class'] }}">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $statusConfig['icon'] }}"/></svg>
-                            {{ $statusConfig['label'] }}
-                        </span>
-                    </div>
-                    <p class="text-sm text-muted-foreground">
-                        {{ \Carbon\Carbon::parse($item->waktu_mulai)->format('d M Y H:i') }}
-                        &mdash;
-                        {{ \Carbon\Carbon::parse($item->waktu_selesai)->format('H:i') }}
-                    </p>
-                    <p class="text-sm text-foreground/80 mt-2 line-clamp-2">{{ $item->uraian_kegiatan }}</p>
 
-                    @if($item->status === 'dikembalikan_wilayah' && $item->catatan_wilayah)
-                    <div class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-700">
-                        <span class="font-bold">Catatan Pengurus Wilayah:</span> {{ $item->catatan_wilayah }}
-                    </div>
-                    @endif
-                    @if($item->status === 'dikembalikan_inti' && $item->catatan_inti)
-                    <div class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-700">
-                        <span class="font-bold">Catatan Pengurus Inti:</span> {{ $item->catatan_inti }}
-                    </div>
-                    @endif
+        {{-- Header Hari --}}
+        <div>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <span class="text-sm font-black text-primary">H{{ $hariKe }}</span>
+                </div>
+                <div>
+                    <h2 class="text-base font-bold text-foreground">Hari ke-{{ $hariKe }}</h2>
+                    <p class="text-xs text-muted-foreground">{{ $tglFormatted }}</p>
+                </div>
+                <div class="flex-1 h-px bg-border/60 ml-2"></div>
+                <span class="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">{{ $items->count() }} sesi</span>
+            </div>
 
-                    <div class="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                        <span>{{ count($item->peserta_hadir ?? []) }} peserta hadir</span>
-                        <span>&bull;</span>
-                        <span>{{ count($item->dokumen_pendukung ?? []) }} dokumen</span>
-                        <span>&bull;</span>
-                        <span>Dibuat {{ $item->created_at->diffForHumans() }}</span>
+            <div class="space-y-3 pl-4 border-l-2 border-primary/20 ml-5">
+                @foreach($items->sortBy('waktu_mulai') as $item)
+                @php
+                    $statusConfig = match($item->status) {
+                        'draft'                => ['label' => 'Draft', 'class' => 'bg-gray-100 text-gray-600'],
+                        'menunggu_wilayah'     => ['label' => 'Menunggu Wilayah', 'class' => 'bg-yellow-100 text-yellow-700'],
+                        'dikembalikan_wilayah' => ['label' => 'Dikembalikan (Revisi)', 'class' => 'bg-orange-100 text-orange-700'],
+                        'menunggu_inti'        => ['label' => 'Menunggu Pengurus Inti', 'class' => 'bg-blue-100 text-blue-700'],
+                        'dikembalikan_inti'    => ['label' => 'Dikembalikan (Inti)', 'class' => 'bg-orange-100 text-orange-700'],
+                        'disetujui'            => ['label' => 'Disetujui ✓', 'class' => 'bg-emerald-100 text-emerald-700'],
+                        default                => ['label' => $item->status, 'class' => 'bg-gray-100 text-gray-600'],
+                    };
+                    $icon = $sesiIcon[$item->nama_sesi] ?? '📋';
+                @endphp
+                <div class="glass-card p-5 rounded-2xl border border-white/60 transition-all hover:shadow-md">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap mb-1">
+                                <span class="text-lg">{{ $icon }}</span>
+                                <h3 class="font-bold text-foreground">{{ $item->nama_sesi }}</h3>
+                                <span class="inline-flex items-center text-xs font-bold px-2.5 py-0.5 rounded-full {{ $statusConfig['class'] }}">
+                                    {{ $statusConfig['label'] }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-muted-foreground mb-2">
+                                {{ \Carbon\Carbon::parse($item->waktu_mulai)->format('H:i') }} &mdash; {{ \Carbon\Carbon::parse($item->waktu_selesai)->format('H:i') }}
+                            </p>
+                            <p class="text-sm text-foreground/80 line-clamp-2">{{ $item->uraian_kegiatan }}</p>
+
+                            @if($item->status === 'dikembalikan_wilayah' && $item->catatan_wilayah)
+                            <div class="mt-2 p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-700">
+                                <span class="font-bold">Catatan Wilayah:</span> {{ $item->catatan_wilayah }}
+                            </div>
+                            @endif
+                            @if($item->status === 'dikembalikan_inti' && $item->catatan_inti)
+                            <div class="mt-2 p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-700">
+                                <span class="font-bold">Catatan Inti:</span> {{ $item->catatan_inti }}
+                            </div>
+                            @endif
+
+                            <div class="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                <span>{{ count($item->peserta_hadir ?? []) }} hadir</span>
+                                <span>&bull;</span>
+                                <span>{{ count($item->dokumen_pendukung ?? []) }} dokumen</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 shrink-0">
+                            @if(in_array($item->status, ['draft', 'dikembalikan_wilayah', 'dikembalikan_inti']))
+                                <a href="{{ route('amir.laporan.edit', $item->id) }}"
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border text-xs font-semibold rounded-xl hover:bg-gray-50 transition-all">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    Edit
+                                </a>
+                                <form action="{{ route('amir.laporan.kirim', $item->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit"
+                                            onclick="return confirm('Kirim laporan ini ke Pengurus Wilayah?')"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 shadow-sm transition-all">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                                        Kirim
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2 shrink-0">
-                    @if(in_array($item->status, ['draft', 'dikembalikan_wilayah', 'dikembalikan_inti']))
-                        <a href="{{ route('amir.laporan.edit', $item->id) }}"
-                           class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-border text-sm font-semibold rounded-xl hover:bg-gray-50 transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            Edit
-                        </a>
-                        <form action="{{ route('amir.laporan.kirim', $item->id) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                    onclick="return confirm('Kirim laporan ini ke Pengurus Wilayah?')"
-                                    class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary/90 shadow-sm shadow-primary/20 transition-all">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                                Kirim
-                            </button>
-                        </form>
-                    @endif
-                </div>
+                @endforeach
             </div>
         </div>
         @endforeach

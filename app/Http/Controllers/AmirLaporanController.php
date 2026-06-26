@@ -106,15 +106,22 @@ class AmirLaporanController extends Controller
 
         if (!$isAmir) abort(403);
 
+        $SESI_TETAP = ['Bayan Subuh', 'Talim Pagi', 'Talim Zhuhur', 'Talim Ashar', 'Bayan Maghrib', 'Talim Akhir'];
+
         $request->validate([
-            'nama_sesi'        => 'required|string|max:150',
-            'waktu_mulai'      => 'required|date',
-            'waktu_selesai'    => 'required|date|after:waktu_mulai',
-            'uraian_kegiatan'  => 'required|string',
-            'peserta_hadir'    => 'nullable|array',
-            'dokumen'          => 'nullable|array|max:5',
-            'dokumen.*'        => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'nama_sesi'          => 'required|string|in:' . implode(',', $SESI_TETAP),
+            'tanggal_kegiatan'   => 'required|date|after_or_equal:' . $jadwal->tanggal_mulai . '|before_or_equal:' . $jadwal->tanggal_selesai,
+            'waktu_mulai'        => 'required|date_format:H:i',
+            'waktu_selesai'      => 'required|date_format:H:i',
+            'uraian_kegiatan'    => 'required|string',
+            'peserta_hadir'      => 'nullable|array',
+            'dokumen'            => 'nullable|array|max:5',
+            'dokumen.*'          => 'file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
+
+        // Gabungkan tanggal dan waktu
+        $waktuMulai   = $request->tanggal_kegiatan . ' ' . $request->waktu_mulai . ':00';
+        $waktuSelesai = $request->tanggal_kegiatan . ' ' . $request->waktu_selesai . ':00';
 
         DB::beginTransaction();
         try {
@@ -124,24 +131,24 @@ class AmirLaporanController extends Controller
                 foreach ($request->file('dokumen') as $file) {
                     $path = $file->store('laporan-dokumen/' . $jadwal_id, 'public');
                     $dokumenPaths[] = [
-                        'nama'  => $file->getClientOriginalName(),
-                        'path'  => $path,
-                        'tipe'  => $file->getClientMimeType(),
+                        'nama'   => $file->getClientOriginalName(),
+                        'path'   => $path,
+                        'tipe'   => $file->getClientMimeType(),
                         'ukuran' => $file->getSize(),
                     ];
                 }
             }
 
             LaporanItikaf::create([
-                'jadwal_itikaf_id' => $jadwal_id,
-                'amir_id'          => $user->id,
-                'nama_sesi'        => $request->nama_sesi,
-                'waktu_mulai'      => $request->waktu_mulai,
-                'waktu_selesai'    => $request->waktu_selesai,
-                'uraian_kegiatan'  => $request->uraian_kegiatan,
-                'peserta_hadir'    => $request->peserta_hadir ?? [],
+                'jadwal_itikaf_id'  => $jadwal_id,
+                'amir_id'           => $user->id,
+                'nama_sesi'         => $request->nama_sesi,
+                'waktu_mulai'       => $waktuMulai,
+                'waktu_selesai'     => $waktuSelesai,
+                'uraian_kegiatan'   => $request->uraian_kegiatan,
+                'peserta_hadir'     => $request->peserta_hadir ?? [],
                 'dokumen_pendukung' => $dokumenPaths,
-                'status'           => 'draft',
+                'status'            => 'draft',
             ]);
 
             DB::commit();
@@ -190,8 +197,10 @@ class AmirLaporanController extends Controller
             return back()->with('error', 'Laporan yang sudah dikirim tidak bisa diedit.');
         }
 
+        $SESI_TETAP = ['Bayan Subuh', 'Talim Pagi', 'Talim Zhuhur', 'Talim Ashar', 'Bayan Maghrib', 'Talim Akhir'];
+
         $request->validate([
-            'nama_sesi'       => 'required|string|max:150',
+            'nama_sesi'       => 'required|string|in:' . implode(',', $SESI_TETAP),
             'waktu_mulai'     => 'required|date',
             'waktu_selesai'   => 'required|date|after:waktu_mulai',
             'uraian_kegiatan' => 'required|string',

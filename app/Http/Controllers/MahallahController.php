@@ -34,11 +34,16 @@ class MahallahController extends Controller
         $validated = $request->validate([
             'nama_mahallah' => 'required|string|max:255',
             'alamat' => 'nullable|string',
+            'foto' => 'nullable|image|max:5120',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'wilayah_id' => 'required|exists:wilayahs,id',
             'status' => 'required|in:aktif,nonaktif',
         ]);
+
+        if ($request->hasFile('foto')) {
+            $validated['foto'] = $request->file('foto')->store('mahallah_fotos', 'public');
+        }
 
         Mahallah::create($validated);
 
@@ -73,11 +78,20 @@ class MahallahController extends Controller
         $validated = $request->validate([
             'nama_mahallah' => 'required|string|max:255',
             'alamat' => 'nullable|string',
+            'foto' => 'nullable|image|max:5120',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'wilayah_id' => 'required|exists:wilayahs,id',
             'status' => 'required|in:aktif,nonaktif',
         ]);
+
+        if ($request->hasFile('foto')) {
+            // Hapus foto lama jika ada
+            if ($mahallah->foto) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($mahallah->foto);
+            }
+            $validated['foto'] = $request->file('foto')->store('mahallah_fotos', 'public');
+        }
 
         $mahallah->update($validated);
 

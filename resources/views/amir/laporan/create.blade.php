@@ -33,24 +33,41 @@
             </div>
             @endif
 
-            {{-- Nama Sesi --}}
+            {{-- Nama Sesi (Dropdown 6 Sesi Tetap) --}}
             <div class="space-y-2">
-                <label for="nama_sesi" class="block text-sm font-bold text-foreground/80">Nama Sesi Kegiatan <span class="text-red-500">*</span></label>
-                <input type="text" id="nama_sesi" name="nama_sesi" value="{{ old('nama_sesi') }}" required
-                    placeholder="Contoh: Sesi Qiyamul Lail Malam ke-3"
-                    class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground/50">
+                <label for="nama_sesi" class="block text-sm font-bold text-foreground/80">Sesi Kegiatan <span class="text-red-500">*</span></label>
+                <select id="nama_sesi" name="nama_sesi" required
+                    class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground">
+                    <option value="">-- Pilih Sesi --</option>
+                    <option value="Bayan Subuh" {{ old('nama_sesi') == 'Bayan Subuh' ? 'selected' : '' }}>🌅 Bayan Subuh</option>
+                    <option value="Talim Pagi" {{ old('nama_sesi') == 'Talim Pagi' ? 'selected' : '' }}>☀️ Talim Pagi</option>
+                    <option value="Talim Zhuhur" {{ old('nama_sesi') == 'Talim Zhuhur' ? 'selected' : '' }}>🕛 Talim Zhuhur</option>
+                    <option value="Talim Ashar" {{ old('nama_sesi') == 'Talim Ashar' ? 'selected' : '' }}>🕓 Talim Ashar</option>
+                    <option value="Bayan Maghrib" {{ old('nama_sesi') == 'Bayan Maghrib' ? 'selected' : '' }}>🌇 Bayan Maghrib</option>
+                    <option value="Talim Akhir" {{ old('nama_sesi') == 'Talim Akhir' ? 'selected' : '' }}>🌙 Talim Akhir</option>
+                </select>
+            </div>
+
+            {{-- Tanggal Hari --}}
+            <div class="space-y-2">
+                <label for="tanggal_kegiatan" class="block text-sm font-bold text-foreground/80">Tanggal Kegiatan <span class="text-red-500">*</span></label>
+                <input type="date" id="tanggal_kegiatan" name="tanggal_kegiatan" value="{{ old('tanggal_kegiatan', date('Y-m-d')) }}" required
+                    min="{{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->format('Y-m-d') }}"
+                    max="{{ \Carbon\Carbon::parse($jadwal->tanggal_selesai)->format('Y-m-d') }}"
+                    class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground">
+                <p class="text-xs text-muted-foreground">Rentang jadwal: {{ \Carbon\Carbon::parse($jadwal->tanggal_mulai)->translatedFormat('d M Y') }} &mdash; {{ \Carbon\Carbon::parse($jadwal->tanggal_selesai)->translatedFormat('d M Y') }}</p>
             </div>
 
             {{-- Waktu --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-2">
                     <label for="waktu_mulai" class="block text-sm font-bold text-foreground/80">Waktu Mulai <span class="text-red-500">*</span></label>
-                    <input type="datetime-local" id="waktu_mulai" name="waktu_mulai" value="{{ old('waktu_mulai') }}" required
+                    <input type="time" id="waktu_mulai" name="waktu_mulai" value="{{ old('waktu_mulai') }}" required
                         class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground">
                 </div>
                 <div class="space-y-2">
                     <label for="waktu_selesai" class="block text-sm font-bold text-foreground/80">Waktu Selesai <span class="text-red-500">*</span></label>
-                    <input type="datetime-local" id="waktu_selesai" name="waktu_selesai" value="{{ old('waktu_selesai') }}" required
+                    <input type="time" id="waktu_selesai" name="waktu_selesai" value="{{ old('waktu_selesai') }}" required
                         class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground">
                 </div>
             </div>

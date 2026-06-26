@@ -48,6 +48,12 @@
                 </x-slot>
                 
                 <div class="space-y-4">
+                    @if($mahallah->foto)
+                    <div>
+                        <div class="text-sm text-muted-foreground mb-1">Foto</div>
+                        <img src="{{ asset('storage/' . $mahallah->foto) }}" alt="Foto {{ $mahallah->nama_mahallah }}" class="w-full max-h-52 object-cover rounded-xl border border-border shadow">
+                    </div>
+                    @endif
                     <div>
                         <div class="text-sm text-muted-foreground mb-1">Nama Mahallah</div>
                         <div class="font-medium text-lg">{{ $mahallah->nama_mahallah }}</div>
@@ -98,7 +104,13 @@
                 <div class="space-y-4 flex-1">
                     <div class="mt-2 rounded-xl border border-border bg-muted/30 flex flex-col items-center justify-center text-muted-foreground overflow-hidden relative min-h-[300px]">
                         @if($mahallah->latitude && $mahallah->longitude)
-                            <div id="map"></div>
+                            <div id="map" class="hidden"></div>
+                            {{-- Google Maps Embed (no API key needed) --}}
+                            <iframe
+                                src="https://maps.google.com/maps?q={{ $mahallah->latitude }},{{ $mahallah->longitude }}&z=16&output=embed"
+                                width="100%" height="300" style="border:0; border-radius:0.75rem;"
+                                allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+                            </iframe>
                             <a href="https://maps.google.com/?q={{ $mahallah->latitude }},{{ $mahallah->longitude }}" target="_blank" class="absolute bottom-4 right-4 z-[1000] text-xs font-medium bg-background/80 px-3 py-1.5 rounded-full border border-border hover:bg-background transition-colors flex items-center gap-1 shadow-md backdrop-blur-sm">
                                 Buka di Google Maps
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-3 w-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>

@@ -47,11 +47,19 @@
             </div>
             @endif
 
-            {{-- Nama Sesi --}}
+            {{-- Nama Sesi (Dropdown 6 Sesi Tetap) --}}
             <div class="space-y-2">
-                <label for="nama_sesi" class="block text-sm font-bold text-foreground/80">Nama Sesi Kegiatan <span class="text-red-500">*</span></label>
-                <input type="text" id="nama_sesi" name="nama_sesi" value="{{ old('nama_sesi', $laporan->nama_sesi) }}" required
+                <label for="nama_sesi" class="block text-sm font-bold text-foreground/80">Sesi Kegiatan <span class="text-red-500">*</span></label>
+                <select id="nama_sesi" name="nama_sesi" required
                     class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground">
+                    <option value="">-- Pilih Sesi --</option>
+                    <option value="Bayan Subuh" {{ old('nama_sesi', $laporan->nama_sesi) == 'Bayan Subuh' ? 'selected' : '' }}>🌅 Bayan Subuh</option>
+                    <option value="Talim Pagi" {{ old('nama_sesi', $laporan->nama_sesi) == 'Talim Pagi' ? 'selected' : '' }}>☀️ Talim Pagi</option>
+                    <option value="Talim Zhuhur" {{ old('nama_sesi', $laporan->nama_sesi) == 'Talim Zhuhur' ? 'selected' : '' }}>🕛 Talim Zhuhur</option>
+                    <option value="Talim Ashar" {{ old('nama_sesi', $laporan->nama_sesi) == 'Talim Ashar' ? 'selected' : '' }}>🕓 Talim Ashar</option>
+                    <option value="Bayan Maghrib" {{ old('nama_sesi', $laporan->nama_sesi) == 'Bayan Maghrib' ? 'selected' : '' }}>🌇 Bayan Maghrib</option>
+                    <option value="Talim Akhir" {{ old('nama_sesi', $laporan->nama_sesi) == 'Talim Akhir' ? 'selected' : '' }}>🌙 Talim Akhir</option>
+                </select>
             </div>
 
             {{-- Waktu --}}

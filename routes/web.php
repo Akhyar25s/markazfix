@@ -13,6 +13,7 @@ use App\Http\Controllers\PersetujuanLaporanController;
 use App\Http\Controllers\JenisKegiatanController;
 use App\Http\Controllers\TargetKegiatanController;
 use App\Http\Controllers\AbsensiKegiatanController;
+use App\Http\Controllers\TamuController;
 
 
 Route::get('/', function () {
@@ -50,6 +51,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/jadwal/{jadwal}', [JadwalItikafController::class, 'destroy'])->name('jadwal.destroy');
         Route::get('/jadwal/{id}/peserta', [JadwalItikafController::class, 'peserta'])->name('jadwal.peserta');
         Route::post('/jadwal/{id}/peserta/{peserta_id}/jadikan-amir', [JadwalItikafController::class, 'jadikanAmir'])->name('jadwal.jadikan-amir');
+        Route::delete('/jadwal/{id}/peserta/{peserta_id}/hapus', [JadwalItikafController::class, 'hapusPeserta'])->name('jadwal.hapus-peserta');
+        Route::get('/jadwal/{jadwal}/edit', [JadwalItikafController::class, 'edit'])->name('jadwal.edit');
+        Route::put('/jadwal/{jadwal}', [JadwalItikafController::class, 'update'])->name('jadwal.update');
 
         // Kelola Wilayah & Mahallah
         Route::resource('wilayah', WilayahController::class);
@@ -127,6 +131,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/rekam', [AbsensiKegiatanController::class, 'create'])->name('create');
         Route::post('/rekam', [AbsensiKegiatanController::class, 'store'])->name('store');
     });
+
+    // ============================================================
+    // MODUL PENDAFTARAN TAMU — Amir & Pengurus bisa akses
+    // ============================================================
+    Route::get('/tamu/daftarkan', [TamuController::class, 'create'])->name('tamu.create');
+    Route::post('/tamu/daftarkan', [TamuController::class, 'store'])->name('tamu.store');
 
     // ============================================================
     // MODUL M5: NOTIFIKASI IN-APP — semua role login bisa akses
