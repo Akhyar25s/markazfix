@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Akun - MARKAZ</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Load face-api.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
 <body class="bg-background text-foreground antialiased min-h-screen flex items-center justify-center p-4 py-12 selection:bg-primary/30 relative overflow-x-hidden">
 
@@ -185,7 +187,7 @@
         </div>
     </div>
 
-    <!-- Script untuk WebCam -->
+    <!-- Script untuk WebCam & face-api.js -->
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
@@ -203,12 +205,23 @@
         const angleLabels = ['Tampak Depan', 'Menoleh ke Kiri', 'Menoleh ke Kanan'];
         let currentAngle = 0;
         let stream = null;
+        let modelsLoaded = false;
 
-        // Buka Kamera
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models/';
+
+        // Buka Kamera dan Muat Model
         startBtn.addEventListener('click', async () => {
             try {
-                startBtn.innerHTML = '<svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memuat...';
+                startBtn.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-foreground" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memuat AI Wajah...';
                 startBtn.disabled = true;
+
+                // Muat model face-api.js jika belum dimuat
+                if (!modelsLoaded) {
+                    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                    modelsLoaded = true;
+                }
 
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
                 video.srcObject = stream;
@@ -232,7 +245,7 @@
                 document.getElementById('foto_wajah_kanan').value = '';
                 updateInstruction();
             } catch (err) {
-                alert("Gagal mengakses kamera. Error: " + err.message);
+                alert("Gagal mengakses kamera/AI. Pastikan izin kamera aktif. Error: " + err.message);
             } finally {
                 startBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Buka Kamera';
                 startBtn.disabled = false;
@@ -246,10 +259,14 @@
             }
         }
 
-        // Ambil Foto
-        takeBtn.addEventListener('click', () => {
+        // Ambil Foto & Analisis Descriptor Wajah
+        takeBtn.addEventListener('click', async () => {
             if(!stream || currentAngle >= 3) return;
             
+            takeBtn.disabled = true;
+            takeBtn.innerHTML = 'Menganalisis...';
+
+            // Ambil gambar saat ini dari video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
@@ -258,31 +275,53 @@
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Simpan berdasar angle
-            const angleName = angles[currentAngle];
-            document.getElementById('foto_wajah_' + angleName).value = dataUrl;
-            
-            // Tampilkan preview kecil
-            const thumb = document.getElementById('preview-' + angleName);
-            thumb.src = dataUrl;
-            
-            currentAngle++;
-            
-            if (currentAngle < 3) {
+
+            try {
+                // Deteksi wajah dan ekstrak descriptor menggunakan TinyFaceDetector
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detection) {
+                    alert("Wajah tidak terdeteksi! Pastikan wajah Anda terlihat sepenuhnya di dalam kamera dengan pencahayaan yang cukup.");
+                    return;
+                }
+
+                // Ambil descriptor (array 128 float) dan ubah ke string JSON
+                const descriptorArray = Array.from(detection.descriptor);
+                const descriptorJson = JSON.stringify(descriptorArray);
+
+                // Simpan berdasar angle
+                const angleName = angles[currentAngle];
+                document.getElementById('foto_wajah_' + angleName).value = descriptorJson;
+                
+                // Tampilkan preview kecil gambar
+                const thumb = document.getElementById('preview-' + angleName);
+                thumb.src = dataUrl;
+                
+                currentAngle++;
+                
+                if (currentAngle < 3) {
+                    updateInstruction();
+                } else {
+                    // Semua 3 foto sudah diambil
+                    photosPreviewContainer.classList.remove('hidden');
+                    video.classList.add('hidden');
+                    angleInstruction.classList.add('hidden');
+                    
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                    
+                    takeBtn.classList.add('hidden');
+                    retakeBtn.classList.remove('hidden');
+                    photoStatus.classList.remove('hidden');
+                }
+            } catch (err) {
+                alert("Terjadi kesalahan analisis wajah: " + err.message);
+            } finally {
+                takeBtn.disabled = false;
+                takeBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg> <span id="take-photo-text">Ambil Foto</span>`;
                 updateInstruction();
-            } else {
-                // Semua 3 foto sudah diambil
-                photosPreviewContainer.classList.remove('hidden');
-                video.classList.add('hidden');
-                angleInstruction.classList.add('hidden');
-                
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-                
-                takeBtn.classList.add('hidden');
-                retakeBtn.classList.remove('hidden');
-                photoStatus.classList.remove('hidden');
             }
         });
 

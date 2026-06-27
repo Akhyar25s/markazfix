@@ -143,13 +143,13 @@ class FaceRecognitionController extends Controller
         }
 
         // ============================================================
-        // STEP 3: CARI USER BERDASARKAN FACE ID YANG DIKENALI
+        // STEP 3: CARI USER BERDASARKAN USER ID YANG DIKENALI
         // ============================================================
-        $awsFaceId = $faceResult['face_id'] ?? null;
+        $matchedUserId = $faceResult['user_id'] ?? null;
         $pendaftaranWajah = null;
 
-        if ($awsFaceId) {
-            $pendaftaranWajah = PendaftaranWajah::where('aws_face_id', $awsFaceId)
+        if ($matchedUserId) {
+            $pendaftaranWajah = PendaftaranWajah::where('pengguna_id', $matchedUserId)
                                     ->where('status', 'aktif')
                                     ->with('pengguna')
                                     ->first();

@@ -24,7 +24,7 @@ class AuthController extends Controller
     /**
      * Menangani proses pendaftaran dan Face Enrollment
      */
-    public function register(Request $request, AwsRekognitionService $awsRekognition)
+    public function register(Request $request)
     {
         // 1. Validasi Input
         $request->validate([
@@ -65,66 +65,40 @@ class AuthController extends Controller
                 'status'      => 'aktif',
             ]);
 
-            // 3. Proses Foto Wajah (3 Sudut)
+            // 3. Simpan Face Descriptor (3 Sudut) dari face-api.js
             $angles = [
                 'depan' => $request->foto_wajah_depan,
                 'kiri'  => $request->foto_wajah_kiri,
                 'kanan' => $request->foto_wajah_kanan
             ];
 
-            foreach ($angles as $angleName => $base64String) {
-                $imageParts = explode(";base64,", $base64String);
-                
-                if (count($imageParts) != 2) {
-                    throw new \Exception("Format foto $angleName tidak valid.");
-                }
-                
-                $imageTypeAux = explode("image/", $imageParts[0]);
-                $imageType    = $imageTypeAux[1];
-                $imageBase64  = base64_decode($imageParts[1]);
-
-                $fileName = 'temp_face_' . $angleName . '_' . uniqid() . '.' . $imageType;
-                $tempPath = 'temp_faces/' . $fileName;
-                
-                Storage::disk('local')->put($tempPath, $imageBase64);
-                $fullPath = storage_path('app/private/' . $tempPath);
-                
-                if (!file_exists($fullPath)) {
-                    $fullPath = storage_path('app/' . $tempPath);
+            foreach ($angles as $angleName => $descriptorJson) {
+                // Pastikan data deskriptor valid JSON 128 float
+                $descriptor = json_decode($descriptorJson, true);
+                if (!is_array($descriptor) || count($descriptor) !== 128) {
+                    throw new \Exception("Data wajah untuk sudut $angleName tidak valid. Pastikan wajah terdeteksi dengan jelas.");
                 }
 
-                // Panggil Service AWS Rekognition
-                $faceData = $awsRekognition->indexFace($fullPath, $user->id);
-
-                if (!$faceData) {
-                    DB::rollBack();
-                    Storage::disk('local')->delete($tempPath);
-                    return back()->withErrors(['foto_wajah_depan' => "Wajah tidak terdeteksi pada foto $angleName. Pastikan pencahayaan cukup dan wajah terlihat jelas."])->withInput();
-                }
-
-                // 4. Catat ke tabel pendaftaran_wajahs
+                // Catat ke tabel pendaftaran_wajahs
                 PendaftaranWajah::create([
                     'pengguna_id'       => $user->id,
-                    'aws_face_id'       => $faceData['FaceId'],
-                    'aws_collection_id' => env('AWS_REKOGNITION_COLLECTION_ID', 'markaz_faces'),
+                    'aws_face_id'       => $descriptorJson, // Kolom ini menyimpan JSON array koordinat wajah
+                    'aws_collection_id' => 'local_face_api',
                     'status'            => 'aktif'
                 ]);
-
-                // Hapus file sementara setelah selesai diproses
-                Storage::disk('local')->delete($tempPath);
             }
 
             DB::commit();
 
-            // 5. Login pengguna secara otomatis
+            // 4. Login pengguna secara otomatis
             Auth::login($user);
 
-            // 6. Redirect ke Dashboard
+            // 5. Redirect ke Dashboard
             return redirect('/dashboard');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Pendaftaran gagal: ' . $e->getMessage()])->withInput();
         }
     }
 

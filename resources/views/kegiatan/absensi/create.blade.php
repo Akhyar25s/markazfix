@@ -93,7 +93,10 @@
     </div>
 </div>
 
-{{-- Script logic for Camera (Simulated) --}}
+{{-- Load face-api.js CDN --}}
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+{{-- Script logic for Camera & face-api.js --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const video = document.getElementById('webcam');
@@ -110,10 +113,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const scanningOverlay = document.getElementById('scanning_overlay');
     
     let stream = null;
+    let modelsLoaded = false;
+
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models/';
 
     // Start Camera
     startBtn.addEventListener('click', async () => {
         try {
+            startBtn.innerHTML = 'Memuat AI Wajah...';
+            startBtn.disabled = true;
+
+            // Muat model face-api.js jika belum dimuat
+            if (!modelsLoaded) {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+            }
+
             stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
             video.srcObject = stream;
             video.classList.remove('hidden');
@@ -121,30 +138,60 @@ document.addEventListener('DOMContentLoaded', function() {
             startBtn.classList.add('hidden');
             captureBtn.classList.remove('hidden');
         } catch (err) {
-            alert('Tidak dapat mengakses kamera: ' + err.message);
+            alert('Tidak dapat mengakses kamera/AI: ' + err.message);
+        } finally {
+            startBtn.innerHTML = 'Nyalakan Kamera';
+            startBtn.disabled = false;
         }
     });
 
-    // Capture Photo
-    captureBtn.addEventListener('click', () => {
+    // Capture Photo & Extract Descriptor
+    captureBtn.addEventListener('click', async () => {
+        if (!stream) return;
+
+        captureBtn.disabled = true;
+        captureBtn.innerHTML = 'Menganalisis...';
+
+        // Draw image frame to canvas
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
         
         const photoDataUrl = canvas.toDataURL('image/jpeg');
-        photoInput.value = photoDataUrl;
-        
-        capturedPhoto.src = photoDataUrl;
-        capturedPhoto.classList.remove('hidden');
-        video.classList.add('hidden');
-        
-        captureBtn.classList.add('hidden');
-        retakeBtn.classList.remove('hidden');
-        submitBtn.disabled = false;
-        
-        // Stop camera stream to save battery
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
+
+        try {
+            // Deteksi wajah dan descriptor
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks()
+                .withFaceDescriptor();
+
+            if (!detection) {
+                alert("Wajah tidak terdeteksi! Posisikan wajah Anda di tengah kamera dengan pencahayaan yang cukup.");
+                return;
+            }
+
+            // Simpan deskriptor JSON array ke hidden input
+            const descriptorArray = Array.from(detection.descriptor);
+            photoInput.value = JSON.stringify(descriptorArray);
+
+            capturedPhoto.src = photoDataUrl;
+            capturedPhoto.classList.remove('hidden');
+            video.classList.add('hidden');
+            
+            captureBtn.classList.add('hidden');
+            retakeBtn.classList.remove('hidden');
+            submitBtn.disabled = false;
+            
+            // Stop camera stream to save battery
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        } catch (err) {
+            alert("Kesalahan analisis wajah: " + err.message);
+        } finally {
+            captureBtn.disabled = false;
+            captureBtn.innerHTML = 'Ambil Foto';
         }
     });
 

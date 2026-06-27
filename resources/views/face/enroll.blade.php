@@ -80,6 +80,8 @@
 @endsection
 
 @push('scripts')
+<!-- Load face-api.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const video = document.getElementById('webcam');
@@ -90,10 +92,24 @@
         const resultMessage = document.getElementById('result-message');
         
         let stream = null;
+        let modelsLoaded = false;
+
+        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models/';
 
         // Initialize Camera
         btnStart.addEventListener('click', async () => {
             try {
+                btnStart.textContent = 'Memuat AI...';
+                btnStart.disabled = true;
+
+                // Muat model face-api.js jika belum dimuat
+                if (!modelsLoaded) {
+                    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                    modelsLoaded = true;
+                }
+
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'user', width: 720, height: 960 } 
                 });
@@ -101,63 +117,78 @@
                 btnStart.classList.add('hidden');
                 btnCapture.classList.remove('hidden');
             } catch (err) {
-                console.error("Error accessing webcam:", err);
-                showResult('Gagal mengakses kamera. Pastikan izin kamera telah diberikan.', 'error');
+                console.error("Error accessing webcam/AI:", err);
+                showResult('Gagal mengakses kamera/AI. Pastikan izin kamera aktif. Error: ' + err.message, 'error');
+            } finally {
+                btnStart.textContent = 'Nyalakan Kamera';
+                btnStart.disabled = false;
             }
         });
 
-        // Capture and Upload
-        btnCapture.addEventListener('click', () => {
+        // Capture and Upload Descriptor
+        btnCapture.addEventListener('click', async () => {
             if (!stream) return;
             
             // Show loading
             statusOverlay.classList.remove('hidden');
             resultMessage.classList.add('hidden');
             
-            // Set canvas size to video size
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
-            // Draw video frame to canvas
-            const context = canvas.getContext('2d');
-            // Mirror the context so the picture isn't reversed (since video is mirrored via CSS)
-            context.translate(canvas.width, 0);
-            context.scale(-1, 1);
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Convert to base64
-            const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Send to server
-            fetch('/face/enroll', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ image: imageBase64 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                statusOverlay.classList.add('hidden');
-                if (data.success) {
-                    showResult(data.message, 'success');
-                    // Stop camera after success
-                    const tracks = stream.getTracks();
-                    tracks.forEach(track => track.stop());
-                    video.srcObject = null;
-                    btnStart.textContent = 'Daftar Ulang';
-                    btnStart.classList.remove('hidden');
-                    btnCapture.classList.add('hidden');
-                } else {
-                    showResult(data.message || 'Gagal mendaftarkan wajah', 'error');
+            btnCapture.disabled = true;
+            btnCapture.textContent = 'Menganalisis...';
+
+            try {
+                // Deteksi wajah dan ekstrak descriptor menggunakan TinyFaceDetector
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!detection) {
+                    statusOverlay.classList.add('hidden');
+                    showResult("Wajah tidak terdeteksi! Posisikan wajah Anda tepat di dalam bingkai oval dengan pencahayaan yang cukup.", "error");
+                    return;
                 }
-            })
-            .catch(error => {
+
+                // Ambil descriptor (array 128 float) dan ubah ke string JSON
+                const descriptorArray = Array.from(detection.descriptor);
+                const descriptorJson = JSON.stringify(descriptorArray);
+                
+                // Send to server
+                fetch('/face/enroll', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ image: descriptorJson }) // Mengirim deskriptor JSON
+                })
+                .then(response => response.json())
+                .then(data => {
+                    statusOverlay.classList.add('hidden');
+                    if (data.success) {
+                        showResult(data.message, 'success');
+                        // Stop camera after success
+                        const tracks = stream.getTracks();
+                        tracks.forEach(track => track.stop());
+                        video.srcObject = null;
+                        btnStart.textContent = 'Daftar Ulang';
+                        btnStart.classList.remove('hidden');
+                        btnCapture.classList.add('hidden');
+                    } else {
+                        showResult(data.message || 'Gagal mendaftarkan wajah', 'error');
+                    }
+                })
+                .catch(error => {
+                    statusOverlay.classList.add('hidden');
+                    showResult('Terjadi kesalahan jaringan atau server.', 'error');
+                    console.error('Error:', error);
+                });
+            } catch (err) {
                 statusOverlay.classList.add('hidden');
-                showResult('Terjadi kesalahan jaringan atau server.', 'error');
-                console.error('Error:', error);
-            });
+                showResult('Kesalahan AI: ' + err.message, 'error');
+            } finally {
+                btnCapture.disabled = false;
+                btnCapture.textContent = 'Ambil Foto';
+            }
         });
 
         function showResult(message, type) {

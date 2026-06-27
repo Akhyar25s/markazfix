@@ -142,6 +142,8 @@
 @endpush
 
 @push('scripts')
+<!-- Load face-api.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const jadwalData   = document.getElementById('jadwal-data');
@@ -171,6 +173,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let userLat = null, userLng = null;
     let cameraStream = null;
     let isCapturing = false;
+    let modelsLoaded = false;
+
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models/';
 
     // =============================================
     // HAVERSINE (client-side preview)
@@ -252,6 +257,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     async function startCamera() {
         try {
+            procOverlay.classList.remove('hidden');
+            const overlayText = document.querySelector('#processing-overlay p');
+            if (overlayText) overlayText.textContent = 'Memuat AI Wajah...';
+
+            // Muat model face-api.js jika belum dimuat
+            if (!modelsLoaded) {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+            }
+            procOverlay.classList.add('hidden');
+            if (overlayText) overlayText.textContent = 'Memverifikasi...';
+
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: 'user', width: 720, height: 960 } 
             });
@@ -259,7 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
             scanLine.classList.add('animate-scan');
             scanLine.style.opacity = '1';
         } catch (err) {
-            showResult('error', 'Gagal Mengakses Kamera', 'Pastikan izin kamera telah diberikan di browser Anda.', true);
+            procOverlay.classList.add('hidden');
+            showResult('error', 'Gagal Mengakses Kamera/AI', 'Pastikan izin kamera aktif. Error: ' + err.message, true);
         }
     }
 
@@ -268,65 +288,80 @@ document.addEventListener('DOMContentLoaded', () => {
         captureAndVerify();
     });
 
-    function captureAndVerify() {
+    async function captureAndVerify() {
         isCapturing = true;
         procOverlay.classList.remove('hidden');
         scanLine.classList.remove('animate-scan');
         resultBox.classList.add('hidden');
 
-        // Capture frame
-        canvas.width  = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        try {
+            // Deteksi wajah dan ekstrak descriptor menggunakan TinyFaceDetector
+            const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks()
+                .withFaceDescriptor();
 
-        // POST to server
-        fetch('/face/verify', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': CSRF,
-            },
-            body: JSON.stringify({
-                image:     imageBase64,
-                latitude:  userLat,
-                longitude: userLng,
-                jadwal_id: JADWAL_ID,
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            procOverlay.classList.add('hidden');
-            isCapturing = false;
-
-            if (data.success) {
-                const isAlready = data.type === 'already_checked_in';
-                showResult(
-                    isAlready ? 'warning' : 'success',
-                    isAlready ? 'Sudah Absen Hari Ini' : '🎉 Absensi Berhasil!',
-                    data.message,
-                    true
-                );
-                // Stop camera after success
-                stopCamera();
-            } else {
-                showResult('error',
-                    data.type === 'geofence_error' ? 'Lokasi Di Luar Zona' : 'Verifikasi Gagal',
-                    data.message,
-                    true
-                );
+            if (!detection) {
+                procOverlay.classList.add('hidden');
+                isCapturing = false;
+                showResult('error', 'Wajah Tidak Terdeteksi', 'Posisikan wajah Anda di tengah kamera dengan pencahayaan yang cukup.', true);
                 scanLine.classList.add('animate-scan');
+                return;
             }
-        })
-        .catch(() => {
+
+            // Ambil descriptor (array 128 float) dan ubah ke string JSON
+            const descriptorArray = Array.from(detection.descriptor);
+            const descriptorJson = JSON.stringify(descriptorArray);
+
+            // POST ke server
+            fetch('/face/verify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF,
+                },
+                body: JSON.stringify({
+                    image:     descriptorJson, // Mengirim deskriptor JSON wajah
+                    latitude:  userLat,
+                    longitude: userLng,
+                    jadwal_id: JADWAL_ID,
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                procOverlay.classList.add('hidden');
+                isCapturing = false;
+
+                if (data.success) {
+                    const isAlready = data.type === 'already_checked_in';
+                    showResult(
+                        isAlready ? 'warning' : 'success',
+                        isAlready ? 'Sudah Absen Hari Ini' : '🎉 Absensi Berhasil!',
+                        data.message,
+                        true
+                    );
+                    // Stop camera after success
+                    stopCamera();
+                } else {
+                    showResult('error',
+                        data.type === 'geofence_error' ? 'Lokasi Di Luar Zona' : 'Verifikasi Gagal',
+                        data.message,
+                        true
+                    );
+                    scanLine.classList.add('animate-scan');
+                }
+            })
+            .catch(() => {
+                procOverlay.classList.add('hidden');
+                isCapturing = false;
+                showResult('error', 'Kesalahan Jaringan', 'Gagal menghubungi server. Periksa koneksi internet Anda.', true);
+                scanLine.classList.add('animate-scan');
+            });
+        } catch (err) {
             procOverlay.classList.add('hidden');
             isCapturing = false;
-            showResult('error', 'Kesalahan Jaringan', 'Gagal menghubungi server. Periksa koneksi internet Anda.', true);
+            showResult('error', 'AI Error', 'Gagal memproses analisis wajah: ' + err.message, true);
             scanLine.classList.add('animate-scan');
-        });
+        }
     }
 
     function stopCamera() {

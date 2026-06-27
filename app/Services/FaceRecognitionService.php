@@ -2,101 +2,33 @@
 
 namespace App\Services;
 
-use Aws\Rekognition\RekognitionClient;
-use Aws\Exception\AwsException;
 use App\Models\PendaftaranWajah;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class FaceRecognitionService
 {
-    protected $client;
-    protected $collectionId;
-    protected $isMock = false;
-
-    public function __construct()
-    {
-        $key = env('AWS_ACCESS_KEY_ID');
-        $secret = env('AWS_SECRET_ACCESS_KEY');
-
-        if (empty($key) || empty($secret)) {
-            $this->isMock = true;
-            Log::info("AWS_ACCESS_KEY_ID tidak diset. FaceRecognitionService berjalan dalam mode MOCK.");
-        } else {
-            $this->client = new RekognitionClient([
-                'version' => 'latest',
-                'region'  => env('AWS_DEFAULT_REGION', 'ap-southeast-1'),
-                'credentials' => [
-                    'key'    => $key,
-                    'secret' => $secret,
-                ],
-            ]);
-        }
-        
-        $this->collectionId = env('AWS_REKOGNITION_COLLECTION', 'markaz_faces');
-    }
-
     /**
-     * Daftarkan wajah pengguna baru ke AWS Rekognition Collection
+     * Daftarkan wajah pengguna baru ke database lokal (menyimpan face descriptors JSON)
      */
-    public function enrollFace(User $user, $imageBase64)
+    public function enrollFace(User $user, $descriptorJson)
     {
-        if ($this->isMock) {
-            $faceId = 'mock-face-id-' . uniqid();
-            
-            PendaftaranWajah::updateOrCreate(
-                ['pengguna_id' => $user->id],
-                [
-                    'aws_face_id' => $faceId,
-                    'aws_collection_id' => $this->collectionId,
-                    'status' => 'aktif',
-                    'terdaftar_pada' => now(),
-                ]
-            );
-
-            return [
-                'success' => true,
-                'message' => 'Wajah berhasil didaftarkan (MOCK).',
-                'face_id' => $faceId
-            ];
-        }
-
         try {
-            // Remove data:image/jpeg;base64, part if exists
-            if (preg_match('/^data:image\/(\w+);base64,/', $imageBase64)) {
-                $data = substr($imageBase64, strpos($imageBase64, ',') + 1);
-            } else {
-                $data = $imageBase64;
-            }
-            
-            $imageBytes = base64_decode($data);
-
-            $result = $this->client->indexFaces([
-                'CollectionId' => $this->collectionId,
-                'DetectionAttributes' => ['DEFAULT'],
-                'ExternalImageId' => 'user_' . $user->id,
-                'Image' => [
-                    'Bytes' => $imageBytes,
-                ],
-                'MaxFaces' => 1,
-                'QualityFilter' => 'AUTO',
-            ]);
-
-            if (empty($result['FaceRecords'])) {
+            // Pastikan data adalah JSON array 128 float valid
+            $descriptor = json_decode($descriptorJson, true);
+            if (!is_array($descriptor) || count($descriptor) !== 128) {
                 return [
                     'success' => false,
-                    'message' => 'Wajah tidak terdeteksi dalam foto. Silakan coba lagi dengan pencahayaan yang lebih baik.',
+                    'message' => 'Format data wajah tidak valid. Pastikan wajah terdeteksi dengan jelas.',
                 ];
             }
 
-            $faceId = $result['FaceRecords'][0]['Face']['FaceId'];
-
             // Simpan ke database
-            PendaftaranWajah::updateOrCreate(
+            $pendaftaran = PendaftaranWajah::updateOrCreate(
                 ['pengguna_id' => $user->id],
                 [
-                    'aws_face_id' => $faceId,
-                    'aws_collection_id' => $this->collectionId,
+                    'aws_face_id' => $descriptorJson, // Kolom ini menyimpan JSON array koordinat wajah
+                    'aws_collection_id' => 'local_face_api',
                     'status' => 'aktif',
                     'terdaftar_pada' => now(),
                 ]
@@ -105,131 +37,91 @@ class FaceRecognitionService
             return [
                 'success' => true,
                 'message' => 'Wajah berhasil didaftarkan.',
-                'face_id' => $faceId
+                'face_id' => $descriptorJson
             ];
 
-        } catch (AwsException $e) {
-            Log::error('AWS Rekognition Enroll Error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('Local Face Enroll Error: ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menghubungi server pengenal wajah.',
+                'message' => 'Terjadi kesalahan saat mendaftarkan data wajah.',
                 'error' => $e->getMessage()
             ];
         }
     }
 
     /**
-     * Verifikasi wajah saat absensi (1:N search)
+     * Verifikasi wajah (1:N search) dengan membandingkan Euclidean Distance deskriptor wajah
      */
-    public function verifyFace($imageBase64, $similarityThreshold = 90.0)
+    public function verifyFace($descriptorJson, $distanceThreshold = 0.6)
     {
-        if ($this->isMock) {
-            $user = auth()->user();
-            if (!$user) {
-                $pendaftaran = PendaftaranWajah::where('status', 'aktif')->first();
-            } else {
-                $pendaftaran = PendaftaranWajah::where('pengguna_id', $user->id)->where('status', 'aktif')->first();
-                if (!$pendaftaran) {
-                    $pendaftaran = PendaftaranWajah::create([
-                        'pengguna_id' => $user->id,
-                        'aws_face_id' => 'mock-face-id-' . $user->id,
-                        'aws_collection_id' => $this->collectionId,
-                        'status' => 'aktif',
-                        'terdaftar_pada' => now()
-                    ]);
+        try {
+            $inputDescriptor = json_decode($descriptorJson, true);
+            if (!is_array($inputDescriptor) || count($inputDescriptor) !== 128) {
+                return [
+                    'success' => false,
+                    'message' => 'Format data wajah tidak valid. Pastikan kamera mendeteksi wajah.'
+                ];
+            }
+
+            $allPendaftaran = PendaftaranWajah::where('status', 'aktif')->get();
+
+            $bestMatch = null;
+            $minDistance = 999.0;
+
+            foreach ($allPendaftaran as $pendaftaran) {
+                $dbDescriptor = json_decode($pendaftaran->aws_face_id, true);
+                if (!is_array($dbDescriptor) || count($dbDescriptor) !== 128) {
+                    continue;
+                }
+
+                // Hitung Euclidean Distance antara input descriptor dengan database descriptor
+                $distance = 0.0;
+                for ($i = 0; $i < 128; $i++) {
+                    $diff = $inputDescriptor[$i] - $dbDescriptor[$i];
+                    $distance += $diff * $diff;
+                }
+                $distance = sqrt($distance);
+
+                // Di face-api.js, batas jarak default kecocokan adalah < 0.6
+                if ($distance < $distanceThreshold && $distance < $minDistance) {
+                    $minDistance = $distance;
+                    $bestMatch = $pendaftaran;
                 }
             }
 
-            if ($pendaftaran) {
-                return [
-                    'success' => true,
-                    'message' => 'Verifikasi wajah berhasil (MOCK).',
-                    'similarity' => 99.9,
-                    'user_id' => $pendaftaran->pengguna_id,
-                    'face_id' => $pendaftaran->aws_face_id
-                ];
-            }
-
-            return [
-                'success' => false,
-                'message' => 'Tidak ada data pendaftaran wajah di sistem.'
-            ];
-        }
-
-        try {
-            // Remove data:image/jpeg;base64, part if exists
-            if (preg_match('/^data:image\/(\w+);base64,/', $imageBase64)) {
-                $data = substr($imageBase64, strpos($imageBase64, ',') + 1);
-            } else {
-                $data = $imageBase64;
-            }
-            
-            $imageBytes = base64_decode($data);
-
-            $result = $this->client->searchFacesByImage([
-                'CollectionId' => $this->collectionId,
-                'FaceMatchThreshold' => $similarityThreshold,
-                'Image' => [
-                    'Bytes' => $imageBytes,
-                ],
-                'MaxFaces' => 1,
-            ]);
-
-            if (empty($result['FaceMatches'])) {
-                return [
-                    'success' => false,
-                    'message' => 'Wajah tidak dikenali atau tidak cocok.'
-                ];
-            }
-
-            $matchedFaceId = $result['FaceMatches'][0]['Face']['FaceId'];
-            $similarity = $result['FaceMatches'][0]['Similarity'];
-
-            $pendaftaran = PendaftaranWajah::where('aws_face_id', $matchedFaceId)->where('status', 'aktif')->first();
-
-            if ($pendaftaran) {
+            if ($bestMatch) {
+                // Konversi jarak ke persentase kemiripan (similarity) untuk tampilan
+                $similarity = round((1.0 - ($minDistance / $distanceThreshold)) * 100, 2);
                 return [
                     'success' => true,
                     'message' => 'Verifikasi wajah berhasil.',
                     'similarity' => $similarity,
-                    'user_id' => $pendaftaran->pengguna_id,
-                    'face_id' => $matchedFaceId
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Wajah cocok namun tidak ada di data pendaftaran sistem.'
+                    'user_id' => $bestMatch->pengguna_id,
+                    'face_id' => $bestMatch->aws_face_id
                 ];
             }
 
-        } catch (AwsException $e) {
-            Log::error('AWS Rekognition Verify Error: ' . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Terjadi kesalahan sistem pengenal wajah.',
+                'message' => 'Wajah tidak dikenali atau tidak cocok.'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Local Face Verify Error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem pengenal wajah lokal.',
                 'error' => $e->getMessage()
             ];
         }
     }
 
-    
     /**
-     * Utility method untuk memastikan collection ada
+     * Dummy method to maintain compatibility
      */
     public function createCollectionIfNotExists()
     {
-        try {
-            $collections = $this->client->listCollections()->get('CollectionIds');
-            if (!in_array($this->collectionId, $collections)) {
-                $this->client->createCollection([
-                    'CollectionId' => $this->collectionId
-                ]);
-                return true;
-            }
-            return false;
-        } catch (AwsException $e) {
-            Log::error('AWS Collection Create Error: ' . $e->getMessage());
-            return false;
-        }
+        return true;
     }
 }
