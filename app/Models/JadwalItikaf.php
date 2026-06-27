@@ -22,11 +22,23 @@ class JadwalItikaf extends Model
         'keterangan',
         'dibuat_oleh',
         'status',
+        'mahallah_id',
+        'tempat_ibadah_id',
     ];
 
     public function pembuat()
     {
         return $this->belongsTo(User::class, 'dibuat_oleh');
+    }
+
+    public function mahallah()
+    {
+        return $this->belongsTo(Mahallah::class, 'mahallah_id');
+    }
+
+    public function tempatIbadah()
+    {
+        return $this->belongsTo(TempatIbadah::class, 'tempat_ibadah_id');
     }
 
     public function pesertas()

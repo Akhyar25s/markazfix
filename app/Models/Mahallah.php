@@ -30,4 +30,9 @@ class Mahallah extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function tempatIbadahs()
+    {
+        return $this->hasMany(TempatIbadah::class, 'mahallah_id');
+    }
 }

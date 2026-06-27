@@ -66,6 +66,29 @@
                     class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground/50">
             </div>
 
+            {{-- Jadwal I'tikaf --}}
+            <div class="space-y-2">
+                <label for="jadwal_itikaf_id" class="block text-sm font-bold text-foreground/80">Jadwal I'tikaf <span class="text-red-500">*</span></label>
+                @if($isAmir)
+                    @php
+                        $selectedJadwal = $jadwals->firstWhere('id', $myJadwalId);
+                    @endphp
+                    <input type="text" readonly value="{{ $selectedJadwal ? $selectedJadwal->nama_itikaf : 'Jadwal Anda (Amir)' }}"
+                        class="w-full px-4 py-3 bg-gray-100 border border-border rounded-xl outline-none text-muted-foreground font-medium">
+                    <input type="hidden" name="jadwal_itikaf_id" value="{{ $myJadwalId }}">
+                @else
+                    <select id="jadwal_itikaf_id" name="jadwal_itikaf_id" required
+                        class="w-full px-4 py-3 bg-white/60 border border-border rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground">
+                        <option value="" disabled selected>-- Pilih Jadwal I'tikaf Aktif --</option>
+                        @foreach($jadwals as $j)
+                            <option value="{{ $j->id }}" {{ old('jadwal_itikaf_id') == $j->id ? 'selected' : '' }}>
+                                {{ $j->nama_itikaf }} (Status: {{ ucfirst($j->status) }})
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
+            </div>
+
             {{-- Foto Wajah (Webcam) --}}
             <div class="space-y-3">
                 <label class="block text-sm font-bold text-foreground/80">Foto Wajah <span class="text-red-500">*</span>

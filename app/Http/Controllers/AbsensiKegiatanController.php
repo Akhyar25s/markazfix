@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\NotifikasiService;
+use App\Services\FaceRecognitionService;
 
 class AbsensiKegiatanController extends Controller
 {
@@ -62,7 +63,7 @@ class AbsensiKegiatanController extends Controller
         return view('kegiatan.absensi.create', compact('jenisKegiatans'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, FaceRecognitionService $faceService)
     {
         $request->validate([
             'jenis_kegiatan_id' => 'required|exists:jenis_kegiatans,id',
@@ -72,77 +73,77 @@ class AbsensiKegiatanController extends Controller
         $user = \Illuminate\Support\Facades\Auth::user();
 
         // ---------------------------------------------------------
-        // SIMULASI FACE RECOGNITION AWS
-        // Sama seperti logika di FaceRecognitionController
+        // VERIFIKASI WAJAH via FaceRecognitionService
+        // (Real AWS Rekognition jika key terkonfigurasi, atau MOCK jika tidak)
         // ---------------------------------------------------------
-        $pendaftaran = \App\Models\PendaftaranWajah::where('pengguna_id', $user->id)->first();
-        
-        if (!$pendaftaran) {
-            return back()->with('error', 'Wajah Anda belum terdaftar di sistem. Silakan hubungi Pengurus Wilayah.');
-        }
+        $faceResult = $faceService->verifyFace($request->input('photo'));
 
-        // Simulasi validasi (menganggap berhasil jika ada foto)
-        $isRecognized = true;
-
-        if ($isRecognized) {
+        if (!$faceResult['success']) {
+            // Catat absensi gagal
             \App\Models\AbsensiKegiatan::create([
-                'pengguna_id' => $user->id,
-                'jenis_kegiatan_id' => $request->jenis_kegiatan_id,
-                'waktu_kegiatan' => now(),
-                'status_wajah' => 'dikenali',
-                'status_absen' => 'berhasil'
+                'pengguna_id'      => $user->id,
+                'jenis_kegiatan_id'=> $request->jenis_kegiatan_id,
+                'waktu_kegiatan'   => now(),
+                'status_wajah'     => 'tidak_dikenali',
+                'status_absen'     => 'gagal'
             ]);
 
-            // Cek pencapaian target
-            $tahunSekarang = date('Y');
-            $bulanSekarang = date('n');
-            
-            $target = \App\Models\TargetKegiatan::where('jenis_kegiatan_id', $request->jenis_kegiatan_id)
-                ->where('tahun', $tahunSekarang)
-                ->where(function($q) use ($bulanSekarang) {
-                    $q->where('periode', 'tahunan')
-                      ->orWhere(function($sq) use ($bulanSekarang) {
-                          $sq->where('periode', 'bulanan')->where('bulan', $bulanSekarang);
-                      });
-                })
-                ->orderBy('periode', 'asc') // Prioritaskan bulanan jika ada dua-duanya
-                ->first();
+            return back()->with('error', 'Wajah tidak dikenali! ' . $faceResult['message']);
+        }
 
-            if ($target) {
-                $query = \App\Models\AbsensiKegiatan::where('pengguna_id', $user->id)
-                    ->where('jenis_kegiatan_id', $request->jenis_kegiatan_id)
-                    ->where('status_absen', 'berhasil')
-                    ->whereYear('waktu_kegiatan', $tahunSekarang);
-                    
-                if ($target->periode === 'bulanan') {
-                    $query->whereMonth('waktu_kegiatan', $bulanSekarang);
-                }
+        // Pastikan wajah yang terdeteksi adalah milik user yang login
+        if (isset($faceResult['user_id']) && $faceResult['user_id'] != $user->id) {
+            return back()->with('error', 'Wajah yang terdeteksi tidak sesuai dengan akun Anda.');
+        }
 
-                $capaian = $query->count();
+        // Catat absensi berhasil
+        \App\Models\AbsensiKegiatan::create([
+            'pengguna_id'       => $user->id,
+            'jenis_kegiatan_id' => $request->jenis_kegiatan_id,
+            'waktu_kegiatan'    => now(),
+            'status_wajah'      => 'dikenali',
+            'status_absen'      => 'berhasil'
+        ]);
 
-                if ($capaian == $target->jumlah_target) {
-                    NotifikasiService::kirim(
-                        $user->id,
-                        'Target Tercapai! 🎉',
-                        'Alhamdulillah, Anda telah mencapai target ' . $target->periode . ' untuk kegiatan ini.',
-                        'success',
-                        $target->id,
-                        'target_kegiatan'
-                    );
-                }
+        // Cek pencapaian target
+        $tahunSekarang = date('Y');
+        $bulanSekarang = date('n');
+        
+        $target = \App\Models\TargetKegiatan::where('jenis_kegiatan_id', $request->jenis_kegiatan_id)
+            ->where('tahun', $tahunSekarang)
+            ->where(function($q) use ($bulanSekarang) {
+                $q->where('periode', 'tahunan')
+                  ->orWhere(function($sq) use ($bulanSekarang) {
+                      $sq->where('periode', 'bulanan')->where('bulan', $bulanSekarang);
+                  });
+            })
+            ->orderBy('periode', 'asc')
+            ->first();
+
+        if ($target) {
+            $query = \App\Models\AbsensiKegiatan::where('pengguna_id', $user->id)
+                ->where('jenis_kegiatan_id', $request->jenis_kegiatan_id)
+                ->where('status_absen', 'berhasil')
+                ->whereYear('waktu_kegiatan', $tahunSekarang);
+                
+            if ($target->periode === 'bulanan') {
+                $query->whereMonth('waktu_kegiatan', $bulanSekarang);
             }
 
-            return redirect()->route('absensi-kegiatan.index')->with('success', 'Kegiatan berhasil dicatat! Barakallah fiikum.');
-        } else {
-            \App\Models\AbsensiKegiatan::create([
-                'pengguna_id' => $user->id,
-                'jenis_kegiatan_id' => $request->jenis_kegiatan_id,
-                'waktu_kegiatan' => now(),
-                'status_wajah' => 'tidak_dikenali',
-                'status_absen' => 'gagal'
-            ]);
+            $capaian = $query->count();
 
-            return back()->with('error', 'Wajah tidak dikenali! Absensi kegiatan gagal dicatat.');
+            if ($capaian == $target->jumlah_target) {
+                NotifikasiService::kirim(
+                    $user->id,
+                    'Target Tercapai! 🎉',
+                    'Alhamdulillah, Anda telah mencapai target ' . $target->periode . ' untuk kegiatan ini.',
+                    'success',
+                    $target->id,
+                    'target_kegiatan'
+                );
+            }
         }
+
+        return redirect()->route('absensi-kegiatan.index')->with('success', 'Kegiatan berhasil dicatat! Barakallah fiikum.');
     }
 }

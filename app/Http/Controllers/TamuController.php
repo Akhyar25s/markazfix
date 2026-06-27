@@ -15,26 +15,36 @@ use App\Services\AwsRekognitionService;
 class TamuController extends Controller
 {
     /**
-     * Tampilkan form pendaftaran tamu (hanya untuk Amir & Pengurus)
+     * Tampilkan form pendaftaran tamu (hanya untuk Amir & Pengurus Inti)
      */
     public function create()
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['pengurus_inti', 'pengurus_wilayah', 'anggota'])) {
-            return redirect('/dashboard')->with('error', 'Akses ditolak.');
+        
+        // Cek apakah user adalah Amir pada jadwal aktif (berlangsung atau dijadwalkan)
+        $pesertaAmir = DB::table('peserta_itikafs')
+            ->join('jadwal_itikafs', 'peserta_itikafs.jadwal_itikaf_id', '=', 'jadwal_itikafs.id')
+            ->where('peserta_itikafs.pengguna_id', $user->id)
+            ->where('peserta_itikafs.adalah_amir', true)
+            ->whereIn('jadwal_itikafs.status', ['dijadwalkan', 'berlangsung'])
+            ->select('peserta_itikafs.*')
+            ->first();
+
+        $isAmir = $pesertaAmir !== null;
+        $isPengurusInti = $user->role === 'pengurus_inti';
+
+        if (!$isAmir && !$isPengurusInti) {
+            return redirect('/dashboard')->with('error', 'Hanya Amir I\'tikaf atau Pengurus Inti yang dapat mendaftarkan tamu.');
         }
 
-        // Cek apakah user adalah Amir pada jadwal aktif
-        $isAmir = DB::table('peserta_itikafs')
-            ->where('pengguna_id', $user->id)
-            ->where('adalah_amir', true)
-            ->exists();
+        // Ambil jadwal aktif
+        $jadwals = \App\Models\JadwalItikaf::whereIn('status', ['dijadwalkan', 'berlangsung'])
+            ->orderBy('tanggal_mulai', 'desc')
+            ->get();
 
-        if (!$isAmir && !in_array($user->role, ['pengurus_inti', 'pengurus_wilayah'])) {
-            return redirect('/dashboard')->with('error', 'Hanya Amir I\'tikaf atau Pengurus yang dapat mendaftarkan tamu.');
-        }
+        $myJadwalId = $pesertaAmir ? $pesertaAmir->jadwal_itikaf_id : null;
 
-        return view('tamu.create');
+        return view('tamu.create', compact('jadwals', 'isPengurusInti', 'isAmir', 'myJadwalId'));
     }
 
     /**
@@ -43,12 +53,20 @@ class TamuController extends Controller
     public function store(Request $request, AwsRekognitionService $awsRekognition)
     {
         $user = Auth::user();
-        $isAmir = DB::table('peserta_itikafs')
-            ->where('pengguna_id', $user->id)
-            ->where('adalah_amir', true)
-            ->exists();
+        
+        // Cek apakah user adalah Amir pada jadwal aktif (berlangsung atau dijadwalkan)
+        $pesertaAmir = DB::table('peserta_itikafs')
+            ->join('jadwal_itikafs', 'peserta_itikafs.jadwal_itikaf_id', '=', 'jadwal_itikafs.id')
+            ->where('peserta_itikafs.pengguna_id', $user->id)
+            ->where('peserta_itikafs.adalah_amir', true)
+            ->whereIn('jadwal_itikafs.status', ['dijadwalkan', 'berlangsung'])
+            ->select('peserta_itikafs.*')
+            ->first();
 
-        if (!$isAmir && !in_array($user->role, ['pengurus_inti', 'pengurus_wilayah'])) {
+        $isAmir = $pesertaAmir !== null;
+        $isPengurusInti = $user->role === 'pengurus_inti';
+
+        if (!$isAmir && !$isPengurusInti) {
             return redirect('/dashboard')->with('error', 'Akses ditolak.');
         }
 
@@ -56,6 +74,7 @@ class TamuController extends Controller
             'name'             => 'required|string|max:255',
             'asal_daerah'      => 'required|string|max:255',
             'foto_wajah_depan' => 'required|string',
+            'jadwal_itikaf_id' => 'required|exists:jadwal_itikafs,id',
         ]);
 
         // Ambil atau buat wilayah "Tamu"
@@ -115,8 +134,27 @@ class TamuController extends Controller
                 'status'            => 'aktif',
             ]);
 
+            // === DAFTARKAN TAMU SEBAGAI PESERTA JADWAL I'TIKAF YANG DIPILIH ===
+            $jadwalId = $request->jadwal_itikaf_id;
+
+            // Security: Jika user yang mendaftarkan adalah Amir, paksa agar terdaftar ke jadwal tugasnya saja
+            if ($isAmir && $pesertaAmir) {
+                $jadwalId = $pesertaAmir->jadwal_itikaf_id;
+            }
+
+            // Daftarkan sebagai peserta
+            \App\Models\PesertaItikaf::create([
+                'jadwal_itikaf_id' => $jadwalId,
+                'pengguna_id'      => $tamu->id,
+                'adalah_amir'      => false,
+                'dipilih_oleh'     => $user->id,
+            ]);
+
             DB::commit();
-            return redirect()->route('tamu.create')->with('success', 'Tamu "' . $tamu->name . '" berhasil didaftarkan dan siap melakukan absensi!');
+            
+            $msg = 'Tamu "' . $tamu->name . '" berhasil didaftarkan dan dimasukkan ke dalam peserta jadwal i\'tikaf!';
+
+            return redirect()->route('tamu.create')->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollBack();

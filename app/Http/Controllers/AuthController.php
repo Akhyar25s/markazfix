@@ -133,10 +133,19 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $request->validate([
+            'login' => ['required', 'string'],
             'password' => ['required'],
         ]);
+
+        // Cek apakah input 'login' berupa email atau no telepon
+        $loginValue = $request->input('login');
+        $loginField = filter_var($loginValue, FILTER_VALIDATE_EMAIL) ? 'email' : 'no_telepon';
+
+        $credentials = [
+            $loginField => $loginValue,
+            'password' => $request->input('password'),
+        ];
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
@@ -147,15 +156,15 @@ class AuthController extends Controller
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return back()->withErrors([
-                    'email' => 'Akun Anda sedang tidak aktif. Silakan hubungi admin.',
-                ])->onlyInput('email');
+                    'login' => 'Akun Anda sedang tidak aktif. Silakan hubungi admin.',
+                ])->onlyInput('login');
             }
 
             return redirect()->intended('dashboard');
         }
 
         return back()->withErrors([
-            'email' => 'Email atau kata sandi yang dimasukkan salah.',
-        ])->onlyInput('email');
+            'login' => 'Email/Nomor HP atau kata sandi yang dimasukkan salah.',
+        ])->onlyInput('login');
     }
 }

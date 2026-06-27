@@ -70,27 +70,26 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                    <x-label for="nama_lokasi">Nama Lokasi / Mahallah <span class="text-red-500">*</span></x-label>
-                    <x-select id="nama_lokasi" name="nama_lokasi" required>
-                        <option value="">-- Pilih Lokasi --</option>
+                    <x-label for="mahallah_id">Pilih Mahallah <span class="text-red-500">*</span></x-label>
+                    <x-select id="mahallah_id" name="mahallah_id" required>
+                        <option value="">-- Pilih Mahallah --</option>
                         @foreach($mahallahs as $mahallah)
-                            <option value="{{ $mahallah->nama_mahallah }}" 
-                                    data-lat="{{ $mahallah->latitude }}" 
-                                    data-lng="{{ $mahallah->longitude }}"
-                                    {{ old('nama_lokasi', $jadwal->nama_lokasi) == $mahallah->nama_mahallah ? 'selected' : '' }}>
+                            <option value="{{ $mahallah->id }}" {{ old('mahallah_id', $jadwal->mahallah_id) == $mahallah->id ? 'selected' : '' }}>
                                 {{ $mahallah->nama_mahallah }}
                             </option>
                         @endforeach
                     </x-select>
-                    @error('nama_lokasi')
+                    @error('mahallah_id')
                         <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
                     @enderror
                 </div>
                 
                 <div class="space-y-2">
-                    <x-label for="radius_meter">Radius Presensi (Meter) <span class="text-red-500">*</span></x-label>
-                    <x-input id="radius_meter" name="radius_meter" type="number" min="1" placeholder="Contoh: 100" value="{{ old('radius_meter', $jadwal->radius_meter) }}" required />
-                    @error('radius_meter')
+                    <x-label for="tempat_ibadah_id">Pilih Tempat Ibadah Islam <span class="text-red-500">*</span></x-label>
+                    <x-select id="tempat_ibadah_id" name="tempat_ibadah_id" required>
+                        <option value="">-- Pilih Tempat Ibadah --</option>
+                    </x-select>
+                    @error('tempat_ibadah_id')
                         <p class="text-sm text-red-500 mt-1">{{ $message }}</p>
                     @enderror
                 </div>
@@ -98,21 +97,25 @@
 
             <!-- Map Configuration Section -->
             <div class="space-y-3">
-                <x-label>Konfigurasi Geofencing <span class="text-red-500">*</span></x-label>
+                <x-label>Preview Lokasi & Geofencing</x-label>
                 <div class="flex justify-between items-center mb-2">
-                    <p class="text-xs text-muted-foreground">Tentukan titik koordinat presensi. Lokasi akan otomatis terisi saat Mahallah dipilih.</p>
+                    <p class="text-xs text-muted-foreground">Lokasi dan radius absensi terisi otomatis berdasarkan tempat ibadah yang dipilih.</p>
                 </div>
                 
                 <div id="map" class="border border-border shadow-inner"></div>
                 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-3 gap-4">
                     <div class="space-y-1">
-                        <x-label for="latitude" class="text-xs">Latitude</x-label>
-                        <x-input id="latitude" name="latitude" type="text" value="{{ old('latitude', $jadwal->latitude) }}" readonly class="bg-muted text-xs h-8" />
+                        <x-label class="text-xs">Latitude</x-label>
+                        <x-input id="latitude" name="latitude" type="text" readonly class="bg-muted text-xs h-8" />
                     </div>
                     <div class="space-y-1">
-                        <x-label for="longitude" class="text-xs">Longitude</x-label>
-                        <x-input id="longitude" name="longitude" type="text" value="{{ old('longitude', $jadwal->longitude) }}" readonly class="bg-muted text-xs h-8" />
+                        <x-label class="text-xs">Longitude</x-label>
+                        <x-input id="longitude" name="longitude" type="text" readonly class="bg-muted text-xs h-8" />
+                    </div>
+                    <div class="space-y-1">
+                        <x-label class="text-xs">Radius Absen (Meter)</x-label>
+                        <x-input id="radius_meter" name="radius_meter" type="text" readonly class="bg-muted text-xs h-8" />
                     </div>
                 </div>
             </div>
@@ -130,98 +133,87 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <script src="{{ asset('js/map-utils.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const defaultLat = -2.5489;
         const defaultLng = 118.0149;
-        const initialLat = parseFloat(document.getElementById('latitude').value) || defaultLat;
-        const initialLng = parseFloat(document.getElementById('longitude').value) || defaultLng;
-        const initialZoom = document.getElementById('latitude').value ? 16 : 5;
-
+        
         // Initialize Map using Utility
-        const map = MarkazMap.init('map', [initialLat, initialLng], initialZoom);
+        const map = MarkazMap.init('map', [defaultLat, defaultLng], 5);
 
         let marker = null;
         let circle = null;
         const customIcon = MarkazMap.createIcon('bg-primary');
 
-        if (document.getElementById('latitude').value && document.getElementById('longitude').value) {
-            updateMap(initialLat, initialLng);
-        }
+        const mahallahs = @json($mahallahs);
+        const mahallahSelect = document.getElementById('mahallah_id');
+        const tempatSelect = document.getElementById('tempat_ibadah_id');
 
-        function updateMap(lat, lng) {
+        function updateMapPreview(lat, lng, radius) {
             if (marker) {
                 marker.setLatLng([lat, lng]);
             } else {
-                marker = L.marker([lat, lng], { 
-                    draggable: true,
-                    icon: customIcon
-                }).addTo(map);
-                
-                marker.on('dragend', function(e) {
-                    const pos = marker.getLatLng();
-                    updateInputs(pos.lat, pos.lng);
-                    updateCircle(pos.lat, pos.lng);
-                });
+                marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
             }
 
-            updateCircle(lat, lng);
-            map.setView([lat, lng], map.getZoom() < 16 ? 16 : map.getZoom());
-            updateInputs(lat, lng);
-        }
-
-        function updateCircle(lat, lng) {
-            const radius = parseInt(document.getElementById('radius_meter').value) || 100;
             if (circle) {
                 circle.setLatLng([lat, lng]);
                 circle.setRadius(radius);
             } else {
                 circle = MarkazMap.createGeofence([lat, lng], radius).addTo(map);
             }
-        }
 
-        function updateInputs(lat, lng) {
+            map.setView([lat, lng], 16);
             document.getElementById('latitude').value = lat.toFixed(8);
             document.getElementById('longitude').value = lng.toFixed(8);
+            document.getElementById('radius_meter').value = radius + ' m';
         }
 
-        // Listen for mahallah selection
-        document.getElementById('nama_lokasi').addEventListener('change', function() {
+        mahallahSelect.addEventListener('change', function() {
+            const mahallahId = this.value;
+            tempatSelect.innerHTML = '<option value="">-- Pilih Tempat Ibadah --</option>';
+            
+            if (!mahallahId) return;
+
+            const selectedMahallah = mahallahs.find(m => m.id == mahallahId);
+            if (selectedMahallah && selectedMahallah.tempat_ibadahs) {
+                selectedMahallah.tempat_ibadahs.forEach(function(ti) {
+                    const option = document.createElement('option');
+                    option.value = ti.id;
+                    option.textContent = ti.nama + ' (' + ti.jenis + ')';
+                    option.setAttribute('data-lat', ti.latitude);
+                    option.setAttribute('data-lng', ti.longitude);
+                    option.setAttribute('data-radius', ti.radius_meter);
+                    tempatSelect.appendChild(option);
+                });
+            }
+        });
+
+        tempatSelect.addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
-            const lat = selected.getAttribute('data-lat');
-            const lng = selected.getAttribute('data-lng');
+            if (!selected.value) return;
+
+            const lat = parseFloat(selected.getAttribute('data-lat'));
+            const lng = parseFloat(selected.getAttribute('data-lng'));
+            const radius = parseInt(selected.getAttribute('data-radius'));
 
             if (lat && lng) {
-                updateMap(parseFloat(lat), parseFloat(lng));
+                updateMapPreview(lat, lng, radius);
             }
         });
 
-        // Listen for radius changes
-        document.getElementById('radius_meter').addEventListener('input', function() {
-            const lat = document.getElementById('latitude').value;
-            const lng = document.getElementById('longitude').value;
-            if (lat && lng) {
-                updateCircle(parseFloat(lat), parseFloat(lng));
+        // Trigger change on load if mahallah is selected
+        if (mahallahSelect.value) {
+            mahallahSelect.dispatchEvent(new Event('change'));
+            
+            // Set the current value of Tempat Ibadah
+            const currentTempatIbadahId = "{{ old('tempat_ibadah_id', $jadwal->tempat_ibadah_id) }}";
+            if (currentTempatIbadahId) {
+                tempatSelect.value = currentTempatIbadahId;
+                tempatSelect.dispatchEvent(new Event('change'));
             }
-        });
-
-        // Map Click
-        map.on('click', function(e) {
-            updateMap(e.latlng.lat, e.latlng.lng);
-        });
-
-        // Add Geocoder
-        L.Control.geocoder({
-            defaultMarkGeocode: false,
-            placeholder: "Cari lokasi...",
-        })
-        .on('markgeocode', function(e) {
-            const latlng = e.geocode.center;
-            updateMap(latlng.lat, latlng.lng);
-        })
-        .addTo(map);
+        }
     });
 </script>
 @endpush

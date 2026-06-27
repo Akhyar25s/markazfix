@@ -94,24 +94,28 @@ class FaceRecognitionController extends Controller
             'jadwal_id' => 'required|integer|exists:jadwal_itikafs,id',
         ]);
 
-        $jadwal = JadwalItikaf::find($request->jadwal_id);
+        $jadwal = JadwalItikaf::with('tempatIbadah')->find($request->jadwal_id);
 
         // ============================================================
         // STEP 1: VALIDASI GEOFENCING (Server-Side)
         // ============================================================
-        if (is_null($jadwal->latitude) || is_null($jadwal->longitude)) {
+        $latitude = $jadwal->tempatIbadah ? $jadwal->tempatIbadah->latitude : $jadwal->latitude;
+        $longitude = $jadwal->tempatIbadah ? $jadwal->tempatIbadah->longitude : $jadwal->longitude;
+        $radius = $jadwal->tempatIbadah ? $jadwal->tempatIbadah->radius_meter : $jadwal->radius_meter;
+
+        if (is_null($latitude) || is_null($longitude)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Koordinat lokasi jadwal belum dikonfigurasi oleh admin.',
+                'message' => 'Koordinat lokasi tempat ibadah belum dikonfigurasi.',
             ], 422);
         }
 
         $geoCheck = $this->geofencingService->isWithinRadius(
             userLat:   $request->latitude,
             userLon:   $request->longitude,
-            centerLat: $jadwal->latitude,
-            centerLon: $jadwal->longitude,
-            radiusMeters: $jadwal->radius_meter,
+            centerLat: $latitude,
+            centerLon: $longitude,
+            radiusMeters: $radius,
         );
 
         if (!$geoCheck['is_within']) {
@@ -119,7 +123,7 @@ class FaceRecognitionController extends Controller
                 'success'  => false,
                 'type'     => 'geofence_error',
                 'message'  => 'Anda berada di luar zona yang diizinkan. Jarak Anda: ' .
-                              round($geoCheck['distance']) . ' m (Batas: ' . $geoCheck['radius'] . ' m)',
+                               round($geoCheck['distance']) . ' m (Batas: ' . $geoCheck['radius'] . ' m)',
                 'distance' => $geoCheck['distance'],
             ], 403);
         }

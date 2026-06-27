@@ -14,6 +14,7 @@ use App\Http\Controllers\JenisKegiatanController;
 use App\Http\Controllers\TargetKegiatanController;
 use App\Http\Controllers\AbsensiKegiatanController;
 use App\Http\Controllers\TamuController;
+use App\Http\Controllers\TempatIbadahController;
 
 
 Route::get('/', function () {
@@ -115,6 +116,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Detail Mahallah
         Route::get('/mahallah/{mahallah}', [MahallahController::class, 'show'])->name('mahallah.show');
+
+        // Tempat Ibadah CRUD
+        Route::resource('tempat-ibadah', TempatIbadahController::class);
     });
 
     // Absensi Face Recognition

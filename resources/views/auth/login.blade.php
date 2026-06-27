@@ -38,13 +38,16 @@
             @csrf
             
             <div class="space-y-1">
-                <label for="email" class="block text-sm font-bold text-foreground/80 pl-1">Email</label>
+                <label for="login" class="block text-sm font-bold text-foreground/80 pl-1">Email / Nomor HP</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg>
                     </div>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="admin@markaz.com" required class="w-full pl-11 pr-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all placeholder:text-muted-foreground/50 text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                    <input type="text" id="login" name="login" value="{{ old('login') }}" placeholder="email@contoh.com atau 08123456789" required class="w-full pl-11 pr-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all placeholder:text-muted-foreground/50 text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
                 </div>
+                @error('login')
+                    <p class="text-xs text-red-500 pl-1 mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="space-y-1">
@@ -84,3 +87,4 @@
     </div>
 </body>
 </html>
+

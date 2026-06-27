@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\JadwalItikaf;
 use App\Models\Mahallah;
+use App\Models\TempatIbadah;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotifikasiService;
 
@@ -75,7 +76,7 @@ class JadwalItikafController extends Controller
             return redirect('/dashboard')->with('error', 'Akses ditolak.');
         }
 
-        $mahallahs = Mahallah::all();
+        $mahallahs = Mahallah::with('tempatIbadahs')->get();
         return view('jadwal.create', compact('mahallahs'));
     }
 
@@ -89,27 +90,29 @@ class JadwalItikafController extends Controller
         }
 
         $request->validate([
-            'nama_itikaf' => 'required|string|max:150',
-            'keterangan' => 'nullable|string',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'nama_lokasi' => 'required|string|max:150',
-            'radius_meter' => 'required|integer|min:1',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'nama_itikaf'      => 'required|string|max:150',
+            'keterangan'       => 'nullable|string',
+            'tanggal_mulai'    => 'required|date',
+            'tanggal_selesai'  => 'required|date|after_or_equal:tanggal_mulai',
+            'mahallah_id'      => 'required|exists:mahallahs,id',
+            'tempat_ibadah_id' => 'required|exists:tempat_ibadahs,id',
         ]);
 
+        $tempatIbadah = TempatIbadah::findOrFail($request->tempat_ibadah_id);
+
         $jadwal = JadwalItikaf::create([
-            'nama_itikaf' => $request->nama_itikaf,
-            'keterangan' => $request->keterangan,
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-            'nama_lokasi' => $request->nama_lokasi,
-            'radius_meter' => $request->radius_meter,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'dibuat_oleh' => Auth::id(),
-            'status' => 'dijadwalkan',
+            'nama_itikaf'      => $request->nama_itikaf,
+            'keterangan'       => $request->keterangan,
+            'tanggal_mulai'    => $request->tanggal_mulai,
+            'tanggal_selesai'  => $request->tanggal_selesai,
+            'nama_lokasi'      => $tempatIbadah->nama,
+            'radius_meter'     => $tempatIbadah->radius_meter,
+            'latitude'         => $tempatIbadah->latitude,
+            'longitude'        => $tempatIbadah->longitude,
+            'mahallah_id'      => $request->mahallah_id,
+            'tempat_ibadah_id' => $request->tempat_ibadah_id,
+            'dibuat_oleh'      => Auth::id(),
+            'status'           => 'dijadwalkan',
         ]);
 
         // Notifikasi ke Pengurus Wilayah
@@ -132,7 +135,7 @@ class JadwalItikafController extends Controller
             return redirect('/dashboard')->with('error', 'Akses ditolak.');
         }
 
-        $mahallahs = Mahallah::all();
+        $mahallahs = Mahallah::with('tempatIbadahs')->get();
         return view('jadwal.edit', compact('jadwal', 'mahallahs'));
     }
 
@@ -146,25 +149,27 @@ class JadwalItikafController extends Controller
         }
 
         $request->validate([
-            'nama_itikaf' => 'required|string|max:150',
-            'keterangan' => 'nullable|string',
-            'tanggal_mulai' => 'required|date',
-            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'nama_lokasi' => 'required|string|max:150',
-            'radius_meter' => 'required|integer|min:1',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'nama_itikaf'      => 'required|string|max:150',
+            'keterangan'       => 'nullable|string',
+            'tanggal_mulai'    => 'required|date',
+            'tanggal_selesai'  => 'required|date|after_or_equal:tanggal_mulai',
+            'mahallah_id'      => 'required|exists:mahallahs,id',
+            'tempat_ibadah_id' => 'required|exists:tempat_ibadahs,id',
         ]);
 
+        $tempatIbadah = TempatIbadah::findOrFail($request->tempat_ibadah_id);
+
         $jadwal->update([
-            'nama_itikaf' => $request->nama_itikaf,
-            'keterangan' => $request->keterangan,
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-            'nama_lokasi' => $request->nama_lokasi,
-            'radius_meter' => $request->radius_meter,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
+            'nama_itikaf'      => $request->nama_itikaf,
+            'keterangan'       => $request->keterangan,
+            'tanggal_mulai'    => $request->tanggal_mulai,
+            'tanggal_selesai'  => $request->tanggal_selesai,
+            'nama_lokasi'      => $tempatIbadah->nama,
+            'radius_meter'     => $tempatIbadah->radius_meter,
+            'latitude'         => $tempatIbadah->latitude,
+            'longitude'        => $tempatIbadah->longitude,
+            'mahallah_id'      => $request->mahallah_id,
+            'tempat_ibadah_id' => $request->tempat_ibadah_id,
         ]);
 
         return redirect('/jadwal')->with('success', 'Jadwal I\'tikaf berhasil diperbarui!');
