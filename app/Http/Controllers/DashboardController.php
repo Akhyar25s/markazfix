@@ -108,6 +108,9 @@ class DashboardController extends Controller
         // Laporan terbaru yang relevan untuk wilayah ini
         $laporanTerbaru = LaporanItikaf::with(['jadwal', 'amir'])
             ->where('status', 'menunggu_wilayah')
+            ->whereHas('jadwal.pesertas.pengguna', function ($q) use ($wilayahId) {
+                $q->where('wilayah_id', $wilayahId);
+            })
             ->orderBy('updated_at', 'desc')
             ->limit(5)
             ->get();
