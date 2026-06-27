@@ -11,6 +11,8 @@ class AbsensiKegiatan extends Model
 
     protected $table = 'absensi_kegiatans';
 
+    const UPDATED_AT = null;
+
     protected $fillable = [
         'pengguna_id',
         'jenis_kegiatan_id',
