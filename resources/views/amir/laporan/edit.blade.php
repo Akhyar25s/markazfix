@@ -88,7 +88,7 @@
             {{-- Daftar Hadir --}}
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                    <label class="block text-sm font-bold text-foreground/80">Peserta yang Hadir</label>
+                    <label class="block text-sm font-bold text-foreground/80">Peserta yang Bertugas</label>
                     <span id="hadir-count" class="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">0 dipilih</span>
                 </div>
                 @if($peserta->isEmpty())

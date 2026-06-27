@@ -68,11 +68,11 @@
         {{-- Peserta Hadir --}}
         <div>
             <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                Peserta yang Hadir
+                Peserta yang Bertugas
                 <span class="ml-2 text-primary font-bold">({{ $pesertaHadir->count() }} orang)</span>
             </p>
             @if($pesertaHadir->isEmpty())
-                <p class="text-sm text-muted-foreground italic">Tidak ada peserta yang dicatat hadir.</p>
+                <p class="text-sm text-muted-foreground italic">Tidak ada peserta yang dicatat bertugas.</p>
             @else
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 @foreach($pesertaHadir as $p)
@@ -90,20 +90,37 @@
         {{-- Dokumen Pendukung --}}
         @if(!empty($laporan->dokumen_pendukung))
         <div>
-            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dokumen Pendukung</p>
-            <div class="space-y-2">
+            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Dokumen Pendukung / Foto</p>
+            <div class="space-y-4">
                 @foreach($laporan->dokumen_pendukung as $dok)
-                <a href="{{ Storage::url($dok['path']) }}" target="_blank"
-                   class="flex items-center gap-3 p-3 bg-white/60 rounded-xl border border-border/50 hover:bg-white hover:border-primary/30 transition-all group">
-                    <div class="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">{{ $dok['nama'] }}</p>
-                        <p class="text-xs text-muted-foreground">{{ round($dok['ukuran'] / 1024, 1) }} KB</p>
-                    </div>
-                    <svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                </a>
+                    @php
+                        $isImage = isset($dok['tipe']) && str_starts_with($dok['tipe'], 'image/');
+                    @endphp
+                    @if($isImage)
+                        <div class="space-y-2 bg-white/40 p-3 rounded-2xl border border-border/40">
+                            <div class="flex items-center justify-between text-xs text-muted-foreground">
+                                <span class="font-semibold truncate">{{ $dok['nama'] }}</span>
+                                <span>{{ round($dok['ukuran'] / 1024, 1) }} KB</span>
+                            </div>
+                            <div class="rounded-xl overflow-hidden max-w-lg border border-border/40">
+                                <a href="{{ Storage::url($dok['path']) }}" target="_blank" title="Klik untuk memperbesar">
+                                    <img src="{{ Storage::url($dok['path']) }}" alt="{{ $dok['nama'] }}" class="w-full h-auto object-cover max-h-96 hover:opacity-95 transition-opacity">
+                                </a>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ Storage::url($dok['path']) }}" target="_blank"
+                           class="flex items-center gap-3 p-3 bg-white/60 rounded-xl border border-border/50 hover:bg-white hover:border-primary/30 transition-all group">
+                            <div class="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">{{ $dok['nama'] }}</p>
+                                <p class="text-xs text-muted-foreground">{{ round($dok['ukuran'] / 1024, 1) }} KB</p>
+                            </div>
+                            <svg class="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        </a>
+                    @endif
                 @endforeach
             </div>
         </div>
@@ -119,8 +136,13 @@
             {{-- Tombol Setuju --}}
             <form action="{{ route('persetujuan.approve', $laporan->id) }}" method="POST" class="flex-1">
                 @csrf
+                @php
+                    $confirmMsg = Auth::user()->role === 'pengurus_wilayah'
+                        ? 'Setujui laporan ini? Laporan akan diteruskan ke Pengurus Inti.'
+                        : 'Setujui laporan ini? Laporan akan ditandai sebagai Disetujui Final.';
+                @endphp
                 <button type="submit"
-                    onclick="return confirm('Setujui laporan ini? {{ Auth::user()->role === \"pengurus_wilayah\" ? \"Laporan akan diteruskan ke Pengurus Inti.\" : \"Laporan akan ditandai sebagai Disetujui Final.\" }}')"
+                    onclick="return confirm('{{ $confirmMsg }}')"
                     class="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all hover:-translate-y-0.5">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     @if(Auth::user()->role === 'pengurus_wilayah')
