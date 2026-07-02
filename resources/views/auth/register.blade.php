@@ -82,7 +82,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="space-y-1 md:col-span-2">
                         <label for="wilayah_id" class="block text-sm font-bold text-foreground/80 pl-1">Halaqah Wilayah</label>
-                        <select id="wilayah_id" name="wilayah_id" onchange="toggleAsalDaerah(this)" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
+                        <select id="wilayah_id" name="wilayah_id" onchange="toggleAsalDaerah(this); filterMahallah(this.value);" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
                             <option value="">Pilih Wilayah (Opsional)</option>
                             @foreach(\App\Models\Wilayah::where('nama_wilayah', '!=', 'Tamu')->get() as $wilayah)
                                 <option value="{{ $wilayah->id }}" {{ old('wilayah_id') == $wilayah->id ? 'selected' : '' }}>{{ $wilayah->nama_wilayah }}</option>
@@ -103,9 +103,10 @@
                         <select id="mahallah_id" name="mahallah_id" class="w-full px-4 py-3.5 bg-white/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl outline-none transition-all text-foreground shadow-sm backdrop-blur-sm hover:bg-white/70">
                             <option value="">Pilih Mahallah (Opsional)</option>
                             @foreach(\App\Models\Mahallah::all() as $mahallah)
-                                <option value="{{ $mahallah->id }}" {{ old('mahallah_id') == $mahallah->id ? 'selected' : '' }}>{{ $mahallah->nama_mahallah }}</option>
+                                <option value="{{ $mahallah->id }}" data-wilayah="{{ $mahallah->wilayah_id }}" {{ old('mahallah_id') == $mahallah->id ? 'selected' : '' }}>{{ $mahallah->nama_mahallah }}</option>
                             @endforeach
                         </select>
+                        <p id="mahallah-hint" class="text-xs text-muted-foreground pl-1 mt-1 hidden">Hanya menampilkan mahallah sesuai wilayah yang dipilih.</p>
                     </div>
                 </div>
             </div>
@@ -351,8 +352,54 @@
                 input.value = '';
             }
         }
+
+        // Filter mahallah berdasarkan wilayah yang dipilih
+        function filterMahallah(wilayahId) {
+            const mahallahSelect = document.getElementById('mahallah_id');
+            const hint = document.getElementById('mahallah-hint');
+            const allOptions = mahallahSelect.querySelectorAll('option[data-wilayah]');
+
+            // Reset pilihan mahallah
+            mahallahSelect.value = '';
+
+            if (!wilayahId || wilayahId === 'lainnya') {
+                // Tampilkan semua opsi jika tidak ada wilayah dipilih
+                allOptions.forEach(opt => {
+                    opt.style.display = '';
+                    opt.disabled = false;
+                });
+                hint.classList.add('hidden');
+            } else {
+                // Sembunyikan mahallah yang tidak sesuai wilayah, tampilkan yang sesuai
+                allOptions.forEach(opt => {
+                    if (opt.dataset.wilayah === String(wilayahId)) {
+                        opt.style.display = '';
+                        opt.disabled = false;
+                    } else {
+                        opt.style.display = 'none';
+                        opt.disabled = true;
+                    }
+                });
+                hint.classList.remove('hidden');
+            }
+        }
+
+        // Jalankan filter saat halaman dimuat (untuk old() value setelah validation error)
+        document.addEventListener('DOMContentLoaded', () => {
+            const wilayahSelect = document.getElementById('wilayah_id');
+            if (wilayahSelect.value) {
+                filterMahallah(wilayahSelect.value);
+                // Kembalikan pilihan mahallah yang lama jika ada
+                const oldMahallah = '{{ old('mahallah_id') }}';
+                if (oldMahallah) {
+                    document.getElementById('mahallah_id').value = oldMahallah;
+                }
+            }
+        });
+
         // Expose global
         window.toggleAsalDaerah = toggleAsalDaerah;
+        window.filterMahallah = filterMahallah;
     </script>
 </body>
 </html>

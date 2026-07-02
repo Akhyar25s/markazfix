@@ -81,15 +81,68 @@
                     <div class="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
                 <!-- Mockup Image / Content -->
-                <div class="aspect-video bg-white/20 p-8 flex flex-col gap-6">
-                    <div class="h-8 w-1/3 bg-primary/20 rounded-lg animate-pulse"></div>
-                    <div class="grid grid-cols-3 gap-6">
-                        <div class="h-32 bg-white/40 rounded-xl border border-white/50"></div>
-                        <div class="h-32 bg-white/40 rounded-xl border border-white/50"></div>
-                        <div class="h-32 bg-white/40 rounded-xl border border-white/50"></div>
+                <div class="aspect-video w-full h-full overflow-hidden bg-gray-900 relative">
+                    <div id="slideshow-container" class="w-full h-full relative">
+                        <img src="{{ asset('images/masjid al ihsan.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100" alt="Masjid Al Ihsan">
+                        <img src="{{ asset('images/ceramah.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" alt="Kegiatan Ceramah">
+                        <img src="{{ asset('images/dakwah.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" alt="Kegiatan Dakwah">
+                        <img src="{{ asset('images/makan.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" alt="Kegiatan Makan Bersama">
                     </div>
-                    <div class="flex-1 bg-white/40 rounded-xl border border-white/50"></div>
+                    
+                    <!-- Navigation Dots -->
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                        <span class="slide-dot w-2.5 h-2.5 rounded-full bg-white/80 cursor-pointer transition-all"></span>
+                        <span class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 cursor-pointer transition-all"></span>
+                        <span class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 cursor-pointer transition-all"></span>
+                        <span class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 cursor-pointer transition-all"></span>
+                    </div>
                 </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const slides = document.querySelectorAll('.slide-img');
+                        const dots = document.querySelectorAll('.slide-dot');
+                        let currentSlide = 0;
+                        const slideInterval = 4000; // ganti gambar setiap 4 detik
+
+                        function showSlide(index) {
+                            slides.forEach((slide, i) => {
+                                if (i === index) {
+                                    slide.classList.remove('opacity-0');
+                                    slide.classList.add('opacity-100');
+                                    dots[i].classList.remove('bg-white/40');
+                                    dots[i].classList.add('bg-white/80', 'scale-125');
+                                } else {
+                                    slide.classList.remove('opacity-100');
+                                    slide.classList.add('opacity-0');
+                                    dots[i].classList.remove('bg-white/80', 'scale-125');
+                                    dots[i].classList.add('bg-white/40');
+                                }
+                            });
+                        }
+
+                        function nextSlide() {
+                            currentSlide = (currentSlide + 1) % slides.length;
+                            showSlide(currentSlide);
+                        }
+
+                        // Jalankan interval
+                        let timer = setInterval(nextSlide, slideInterval);
+
+                        // Klik dot untuk navigasi manual
+                        dots.forEach((dot, index) => {
+                            dot.addEventListener('click', () => {
+                                clearInterval(timer);
+                                currentSlide = index;
+                                showSlide(currentSlide);
+                                timer = setInterval(nextSlide, slideInterval);
+                            });
+                        });
+                        
+                        // Inisialisasi slide pertama
+                        showSlide(0);
+                    });
+                </script>
             </div>
         </div>
     </section>
