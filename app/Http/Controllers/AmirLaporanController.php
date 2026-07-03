@@ -106,7 +106,7 @@ class AmirLaporanController extends Controller
 
         if (!$isAmir) abort(403);
 
-        $SESI_TETAP = ['Bayan Subuh', 'Talim Pagi', 'Talim Zhuhur', 'Talim Ashar', 'Bayan Maghrib', 'Talim Akhir'];
+        $SESI_TETAP = ['Bayan Subuh', 'Talim Pagi', 'Talim Zhuhur', 'Talim Ashar', 'Bayan Maghrib', 'Talim Akhir', 'Lainnya'];
 
         $request->validate([
             'nama_sesi'          => 'required|string|in:' . implode(',', $SESI_TETAP),
@@ -197,7 +197,7 @@ class AmirLaporanController extends Controller
             return back()->with('error', 'Laporan yang sudah dikirim tidak bisa diedit.');
         }
 
-        $SESI_TETAP = ['Bayan Subuh', 'Talim Pagi', 'Talim Zhuhur', 'Talim Ashar', 'Bayan Maghrib', 'Talim Akhir'];
+        $SESI_TETAP = ['Bayan Subuh', 'Talim Pagi', 'Talim Zhuhur', 'Talim Ashar', 'Bayan Maghrib', 'Talim Akhir', 'Lainnya'];
 
         $request->validate([
             'nama_sesi'       => 'required|string|in:' . implode(',', $SESI_TETAP),

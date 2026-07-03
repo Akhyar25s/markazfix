@@ -129,6 +129,10 @@
     </div>
 
     {{-- Tombol Keputusan --}}
+    @if(
+        (Auth::user()->role === 'pengurus_wilayah' && $laporan->status === 'menunggu_wilayah') ||
+        (Auth::user()->role === 'pengurus_inti' && $laporan->status === 'menunggu_inti')
+    )
     <div class="glass-card p-6 rounded-2xl border border-white/60 space-y-4">
         <h2 class="text-lg font-bold text-foreground">Berikan Keputusan</h2>
 
@@ -161,6 +165,38 @@
             </button>
         </div>
     </div>
+    @else
+    <div class="glass-card p-6 rounded-2xl border border-white/60 space-y-4">
+        <h2 class="text-lg font-bold text-foreground">Status Persetujuan</h2>
+        <div class="p-4 rounded-xl text-sm font-semibold flex items-center gap-3 
+            @if($laporan->status === 'disetujui')
+                bg-emerald-50 border border-emerald-200 text-emerald-700
+            @elseif($laporan->status === 'menunggu_inti')
+                bg-blue-50 border border-blue-200 text-blue-700
+            @elseif($laporan->status === 'menunggu_wilayah')
+                bg-yellow-50 border border-yellow-200 text-yellow-700
+            @else
+                bg-red-50 border border-red-200 text-red-700
+            @endif">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div>
+                @if($laporan->status === 'disetujui')
+                    Laporan ini telah disetujui secara final.
+                @elseif($laporan->status === 'menunggu_inti')
+                    Laporan telah disetujui oleh Pengurus Wilayah dan sedang menunggu persetujuan final dari Pengurus Inti.
+                @elseif($laporan->status === 'menunggu_wilayah')
+                    Laporan sedang menunggu persetujuan dari Pengurus Wilayah.
+                @elseif($laporan->status === 'dikembalikan_wilayah')
+                    Laporan telah dikembalikan oleh Pengurus Wilayah untuk direvisi.
+                @elseif($laporan->status === 'dikembalikan_inti')
+                    Laporan telah dikembalikan oleh Pengurus Inti untuk direvisi.
+                @else
+                    Status: {{ ucfirst($laporan->status) }}
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>
 

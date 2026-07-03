@@ -15,7 +15,7 @@
     <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity md:hidden" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
     
     <!-- Sidebar -->
-    <aside :class="sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'" class="fixed inset-y-0 left-0 z-50 flex flex-col glass border-r transition-all duration-500 ease-in-out md:relative md:translate-x-0 shadow-lg" x-show="true">
+    <aside :class="sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'" class="fixed inset-y-0 left-0 z-50 flex flex-col glass border-r transition-all duration-500 ease-in-out md:relative md:translate-x-0 shadow-lg overflow-hidden" x-show="true">
         <div class="flex h-20 shrink-0 items-center border-b border-primary/10 px-6 relative overflow-hidden">
             <div class="absolute inset-0 bg-gradient-to-r from-accent/5 to-primary/5"></div>
             <a href="/dashboard" class="flex items-center gap-3 font-extrabold text-2xl tracking-tight relative z-10">
@@ -191,25 +191,29 @@
         <div class="absolute bottom-0 left-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl -z-10 animate-blob" style="animation-delay: 4s;"></div>
 
         <!-- Navbar -->
-        <header class="flex h-20 shrink-0 items-center justify-between glass border-b border-primary/10 px-8 z-10">
-            <button @click="sidebarOpen = !sidebarOpen" class="text-muted-foreground hover:text-primary transition-colors md:hidden p-2 bg-white/50 rounded-lg">
-                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <header class="flex h-16 md:h-20 shrink-0 items-center justify-between glass border-b border-primary/10 px-4 md:px-8 z-[60]">
+            {{-- Hamburger: hanya di mobile --}}
+            <button @click="sidebarOpen = !sidebarOpen" class="text-muted-foreground hover:text-primary transition-colors md:hidden p-2 bg-white/50 rounded-lg shrink-0">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
             </button>
+
+            {{-- Subtitle: hanya di desktop --}}
             <div class="hidden md:flex flex-1 items-center gap-4">
                 <div class="h-8 w-1 bg-gradient-to-b from-primary to-secondary rounded-full"></div>
                 <span class="text-sm font-semibold text-foreground/80 tracking-wide">Sistem Informasi Manajemen Organisasi</span>
             </div>
-            
-            <div class="flex items-center gap-4 sm:gap-6">
+
+            {{-- Kanan: notifikasi + user info + keluar --}}
+            <div class="flex items-center gap-2 md:gap-4 ml-auto md:ml-0">
                 @auth
                 {{-- Notification Bell --}}
                 @php
                     $unreadCount = \App\Models\Notifikasi::where('pengguna_id', Auth::id())->where('dibaca', false)->count();
                 @endphp
-                <a href="{{ route('notifikasi.index') }}" class="relative p-2 text-muted-foreground hover:text-primary transition-colors bg-white/50 hover:bg-white rounded-full shadow-sm">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                <a href="{{ route('notifikasi.index') }}" class="relative p-2 text-muted-foreground hover:text-primary transition-colors bg-white/50 hover:bg-white rounded-full shadow-sm shrink-0">
+                    <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     @if($unreadCount > 0)
                         <span class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full border-2 border-white">
                             {{ $unreadCount > 99 ? '99+' : $unreadCount }}
@@ -217,7 +221,8 @@
                     @endif
                 </a>
 
-                <div class="text-right hidden sm:block">
+                {{-- Nama & role: hanya desktop --}}
+                <div class="text-right hidden md:block">
                     <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
                     <div class="text-xs font-medium text-secondary capitalize flex items-center gap-1 justify-end">
                         {{ str_replace('_', ' ', Auth::user()->role) }}
@@ -226,13 +231,24 @@
                         @endif
                     </div>
                 </div>
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 shadow-sm">
-                    <span class="font-bold text-primary">{{ substr(Auth::user()->name, 0, 1) }}</span>
+
+                {{-- Avatar --}}
+                <div class="h-9 w-9 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 shadow-sm shrink-0">
+                    <span class="font-bold text-primary text-sm">{{ substr(Auth::user()->name, 0, 1) }}</span>
                 </div>
-                <form method="POST" action="{{ route('logout') }}" class="ml-2">
+
+                {{-- Tombol Keluar: ikon di mobile, teks di desktop --}}
+                <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="px-4 py-2 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100 shadow-sm">
+                    {{-- Desktop: tombol teks --}}
+                    <button type="submit" class="hidden md:inline-flex px-4 py-2 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100 shadow-sm">
                         Keluar
+                    </button>
+                    {{-- Mobile: ikon saja --}}
+                    <button type="submit" title="Keluar" class="md:hidden p-2 rounded-xl text-red-500 bg-red-50 hover:bg-red-100 transition-all border border-red-100 shadow-sm shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
                     </button>
                 </form>
                 @endauth

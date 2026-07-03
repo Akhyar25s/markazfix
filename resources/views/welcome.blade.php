@@ -31,9 +31,15 @@
                 <a href="#tentang" class="text-muted-foreground hover:text-primary transition-colors">Tentang Kami</a>
             </div>
 
-            <div class="flex items-center gap-4">
-                <a href="{{ route('login') }}" class="hidden sm:block text-sm font-bold text-foreground hover:text-primary transition-colors px-4 py-2">Masuk</a>
-                <a href="/register" class="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
+            <div class="flex items-center gap-2 sm:gap-4">
+                {{-- Tombol Masuk: selalu tampil di semua ukuran, boomer-friendly --}}
+                <a href="{{ route('login') }}" class="flex items-center gap-1.5 text-sm font-bold text-foreground hover:text-primary transition-all px-3 py-2 rounded-xl border border-border hover:border-primary hover:bg-primary/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Masuk</span>
+                </a>
+                <a href="/register" class="hidden sm:inline-block bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
                     Mulai Sekarang
                 </a>
             </div>
@@ -290,15 +296,15 @@
                 <ul class="space-y-4">
                     <li class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        <span class="text-white/60 text-sm">info@markaz.id</span>
+                        <span class="text-white/60 text-sm">akhyarrrr25@gmail.com</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                        <span class="text-white/60 text-sm">+62 812 3456 7890</span>
+                        <span class="text-white/60 text-sm">+62 8525 1911 002</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        <span class="text-white/60 text-sm leading-relaxed">Gedung Pusat Markaz, Jl. Al-Falah No. 1<br>Jakarta Selatan, 12120</span>
+                        <span class="text-white/60 text-sm leading-relaxed">Masjid Al-Ihsan Jl. Seberang Mesjid RT 02, Seberang Mesjid<br>Banjarmasin Tengah, Banjarmasin, 70231</span>
                     </li>
                 </ul>
             </div>

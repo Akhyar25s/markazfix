@@ -166,6 +166,19 @@ class FaceRecognitionController extends Controller
         $peserta = $pendaftaranWajah->pengguna;
 
         // ============================================================
+        // STEP 3b: PASTIKAN WAJAH YANG TERDETEKSI = USER YANG LOGIN
+        // Mencegah seseorang memakai foto/wajah orang lain untuk absensi
+        // ============================================================
+        $loggedInUser = Auth::user();
+        if ($peserta->id !== $loggedInUser->id) {
+            return response()->json([
+                'success' => false,
+                'type'    => 'face_mismatch',
+                'message' => 'Verifikasi wajah gagal. Wajah yang terdeteksi tidak sesuai dengan akun yang sedang masuk. Silakan gunakan wajah Anda sendiri.',
+            ], 403);
+        }
+
+        // ============================================================
         // STEP 4: CEK APAKAH PESERTA TERDAFTAR UNTUK JADWAL INI
         // ============================================================
         $isPeserta = PesertaItikaf::where('jadwal_itikaf_id', $jadwal->id)

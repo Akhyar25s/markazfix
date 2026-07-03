@@ -59,6 +59,7 @@
                     <option value="Talim Ashar" {{ old('nama_sesi', $laporan->nama_sesi) == 'Talim Ashar' ? 'selected' : '' }}>🕓 Talim Ashar</option>
                     <option value="Bayan Maghrib" {{ old('nama_sesi', $laporan->nama_sesi) == 'Bayan Maghrib' ? 'selected' : '' }}>🌇 Bayan Maghrib</option>
                     <option value="Talim Akhir" {{ old('nama_sesi', $laporan->nama_sesi) == 'Talim Akhir' ? 'selected' : '' }}>🌙 Talim Akhir</option>
+                    <option value="Lainnya" {{ old('nama_sesi', $laporan->nama_sesi) == 'Lainnya' ? 'selected' : '' }}>📝 Lainnya</option>
                 </select>
             </div>
 

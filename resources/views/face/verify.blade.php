@@ -342,11 +342,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Stop camera after success
                     stopCamera();
                 } else {
-                    showResult('error',
-                        data.type === 'geofence_error' ? 'Lokasi Di Luar Zona' : 'Verifikasi Gagal',
-                        data.message,
-                        true
-                    );
+                    let errTitle = 'Verifikasi Gagal';
+                    if (data.type === 'geofence_error')  errTitle = 'Lokasi Di Luar Zona';
+                    if (data.type === 'face_mismatch')   errTitle = 'Wajah Tidak Cocok';
+                    if (data.type === 'not_registered')  errTitle = 'Tidak Terdaftar';
+
+                    showResult('error', errTitle, data.message, true);
                     scanLine.classList.add('animate-scan');
                 }
             })

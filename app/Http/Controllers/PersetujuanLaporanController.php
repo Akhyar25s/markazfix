@@ -57,13 +57,16 @@ class PersetujuanLaporanController extends Controller
 
         // Validasi akses
         if ($user->role === 'pengurus_wilayah') {
-            if ($laporan->status !== 'menunggu_wilayah') {
-                abort(404);
+            // Pengurus wilayah hanya bisa melihat laporan dari wilayahnya sendiri
+            $hasAccess = $laporan->jadwal->pesertas()->whereHas('pengguna', function($q) use ($user) {
+                $q->where('wilayah_id', $user->wilayah_id);
+            })->exists();
+            
+            if (!$hasAccess) {
+                abort(403, 'Anda tidak memiliki akses ke laporan wilayah lain.');
             }
         } elseif ($user->role === 'pengurus_inti') {
-            if ($laporan->status !== 'menunggu_inti') {
-                abort(404);
-            }
+            // Pengurus inti memiliki akses ke semua laporan
         } else {
             abort(403);
         }

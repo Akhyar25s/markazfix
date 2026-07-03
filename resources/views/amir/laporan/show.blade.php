@@ -62,6 +62,7 @@
             'Talim Ashar'   => '🕓',
             'Bayan Maghrib' => '🌇',
             'Talim Akhir'   => '🌙',
+            'Lainnya'       => '📝',
         ];
     @endphp
     <div class="space-y-8">

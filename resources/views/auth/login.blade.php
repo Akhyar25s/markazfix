@@ -53,7 +53,9 @@
             <div class="space-y-1">
                 <div class="flex items-center justify-between pl-1 pr-1">
                     <label for="password" class="block text-sm font-bold text-foreground/80">Kata Sandi</label>
-                    <a href="#" class="text-xs font-bold text-primary hover:text-primary/80 transition-colors">Lupa sandi?</a>
+                    <a href="{{ route('password.request') }}" class="text-sm font-bold text-primary hover:text-primary/80 transition-colors px-3 py-2 rounded-lg hover:bg-primary/10 -mr-2 touch-manipulation" style="min-height: 44px; display: inline-flex; align-items: center;">
+                        🔑 Lupa sandi?
+                    </a>
                 </div>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-muted-foreground">
@@ -79,10 +81,10 @@
         </form>
         
         <div class="mt-8 text-center">
-            <p class="text-sm font-medium text-muted-foreground">
-                Belum punya akun? 
-                <a href="/register" class="font-bold text-secondary hover:text-secondary/80 transition-colors">Daftar sekarang</a>
-            </p>
+            <p class="text-sm font-medium text-muted-foreground">Belum punya akun?</p>
+            <a href="/register" class="mt-2 inline-flex items-center gap-1.5 font-bold text-secondary hover:text-secondary/80 transition-colors px-4 py-2 rounded-xl hover:bg-secondary/10 touch-manipulation" style="min-height: 44px;">
+                Daftar sekarang →
+            </a>
         </div>
     </div>
 </body>

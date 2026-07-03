@@ -186,7 +186,7 @@
                             @endif
                         </td>
                         <td class="p-4 align-middle">
-                            <a href="/laporan/{{ $laporan->id }}">
+                            <a href="{{ route('persetujuan.show', $laporan->id) }}">
                                 <x-button variant="outline" class="h-8 px-3 text-xs">Review</x-button>
                             </a>
                         </td>

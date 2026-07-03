@@ -29,6 +29,14 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/register', [AuthController::class, 'showRegister']);
 Route::post('/register', [AuthController::class, 'register']);
 
+// Lupa Password (WhatsApp & Email OTP)
+Route::get('/forgot-password', [\App\Http\Controllers\ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/forgot-password', [\App\Http\Controllers\ForgotPasswordController::class, 'sendResetOtp'])->name('password.email');
+Route::get('/verify-otp', [\App\Http\Controllers\ForgotPasswordController::class, 'showOtpVerifyForm'])->name('password.otp.verify');
+Route::post('/verify-otp', [\App\Http\Controllers\ForgotPasswordController::class, 'verifyOtp'])->name('password.otp.submit');
+Route::get('/reset-password/{token}', [\App\Http\Controllers\ForgotPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/reset-password', [\App\Http\Controllers\ForgotPasswordController::class, 'resetPassword'])->name('password.update');
+
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard (semua role)
