@@ -185,7 +185,7 @@
         <div class="absolute bottom-0 left-20 w-80 h-80 bg-primary/10 rounded-full blur-3xl -z-10 animate-blob" style="animation-delay: 4s;"></div>
 
         <!-- Navbar -->
-        <header class="flex h-16 md:h-20 shrink-0 items-center justify-between glass border-b border-primary/10 px-4 md:px-8 z-[60]">
+        <header class="flex h-16 md:h-20 shrink-0 items-center justify-between glass border-b border-primary/10 px-4 md:px-6 z-[60] overflow-visible">
             {{-- Hamburger: hanya di mobile --}}
             <button @click="sidebarOpen = !sidebarOpen" class="text-muted-foreground hover:text-primary transition-colors md:hidden p-2 bg-white/50 rounded-lg shrink-0">
                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -194,13 +194,13 @@
             </button>
 
             {{-- Subtitle: hanya di desktop --}}
-            <div class="hidden md:flex flex-1 items-center gap-4">
+            <div class="hidden md:flex items-center gap-4 mr-auto">
                 <div class="h-8 w-1 bg-gradient-to-b from-primary to-secondary rounded-full"></div>
                 <span class="text-sm font-semibold text-foreground/80 tracking-wide">Sistem Informasi Manajemen Organisasi</span>
             </div>
 
             {{-- Kanan: notifikasi + user info + keluar --}}
-            <div class="flex items-center gap-2 md:gap-4 ml-auto md:ml-0">
+            <div class="flex items-center gap-2 md:gap-3 ml-auto shrink-0">
                 @auth
                 {{-- Notification Bell --}}
                 @php
@@ -216,7 +216,7 @@
                 </a>
 
                 {{-- Nama & role: hanya desktop --}}
-                <div class="text-right hidden md:block">
+                <div class="text-right hidden lg:block">
                     <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
                     <div class="text-xs font-medium text-secondary capitalize flex items-center gap-1 justify-end">
                         {{ str_replace('_', ' ', Auth::user()->role) }}
