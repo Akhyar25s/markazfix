@@ -93,10 +93,10 @@ Route::middleware(['auth'])->group(function () {
     // ============================================================
     Route::prefix('amir')->name('amir.')->group(function () {
         Route::get('/laporan', [AmirLaporanController::class, 'index'])->name('laporan.index');
-        Route::get('/laporan/{jadwal_id}/sesi', [AmirLaporanController::class, 'show'])->name('laporan.show');
-        Route::get('/laporan/{jadwal_id}/buat', [AmirLaporanController::class, 'create'])->name('laporan.create');
-        Route::post('/laporan/{jadwal_id}/buat', [AmirLaporanController::class, 'store'])->name('laporan.store');
-        Route::get('/laporan/{id}/edit', [AmirLaporanController::class, 'edit'])->name('laporan.edit');
+        Route::get('/laporan/{jadwal_id}/sesi', [AmirLaporanController::class, 'show'])->name('laporan.show')->where('jadwal_id', '[0-9]+');
+        Route::get('/laporan/{jadwal_id}/buat', [AmirLaporanController::class, 'create'])->name('laporan.create')->where('jadwal_id', '[0-9]+');
+        Route::post('/laporan/{jadwal_id}/buat', [AmirLaporanController::class, 'store'])->name('laporan.store')->where('jadwal_id', '[0-9]+');
+        Route::get('/laporan/{id}/edit', [AmirLaporanController::class, 'edit'])->name('laporan.edit')->where('id', '[0-9]+');
         Route::put('/laporan/{id}/edit', [AmirLaporanController::class, 'update'])->name('laporan.update');
         Route::post('/laporan/{id}/kirim', [AmirLaporanController::class, 'kirim'])->name('laporan.kirim');
         Route::post('/laporan/{id}/hapus-dokumen', [AmirLaporanController::class, 'hapusDokumen'])->name('laporan.hapus-dokumen');
@@ -126,7 +126,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/mahallah/{mahallah}', [MahallahController::class, 'show'])->name('mahallah.show');
 
         // Tempat Ibadah CRUD
-        Route::resource('tempat-ibadah', TempatIbadahController::class);
+        Route::resource('tempat-ibadah', TempatIbadahController::class)->whereNumber('tempat_ibadah');
     });
 
     // Absensi Face Recognition

@@ -17,14 +17,15 @@ class User extends Authenticatable
         'password',
         'no_telepon',
         'umur',
-        'role',
         'wilayah_id',
         'asal_daerah',
         'mahallah_id',
         'foto_profil',
         'fcm_token',
-        'status',
     ];
+
+    // role & status sengaja TIDAK ada di $fillable untuk mencegah mass assignment
+    // Gunakan explicit assignment: $user->role = 'pengurus_inti'; $user->save();
 
     protected $hidden = [
         'password',

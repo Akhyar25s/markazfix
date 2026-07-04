@@ -47,6 +47,11 @@ class ForgotPasswordController extends Controller
             // Kita coba cari yang mirip
             $cleanPhone = preg_replace('/[^0-9]/', '', $loginValue);
             
+            // Validasi: nomor telepon harus minimal 6 digit setelah sanitasi
+            if (strlen($cleanPhone) < 6) {
+                return back()->withErrors(['login' => 'Nomor telepon tidak valid.'])->withInput();
+            }
+            
             // Cari nomor telepon yang mirip di database
             $user = User::where(function($q) use ($cleanPhone) {
                 $q->where('no_telepon', 'like', '%' . $cleanPhone)
