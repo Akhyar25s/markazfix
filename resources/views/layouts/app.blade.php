@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <link rel="icon" type="image/x-icon" href="{{ asset("favicon.ico") }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset("favicon.svg") }}">
+    <link rel="apple-touch-icon" href="{{ asset("apple-touch-icon.png") }}">
+    <link rel="manifest" href="{{ asset("site.webmanifest") }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Sistem Markaz')</title>
@@ -194,7 +198,7 @@
             </button>
 
             {{-- Subtitle: hanya di desktop --}}
-            <div class="hidden md:flex items-center gap-4 mr-auto">
+            <div class="hidden lg:flex items-center gap-3 mr-auto">
                 <div class="h-8 w-1 bg-gradient-to-b from-primary to-secondary rounded-full"></div>
                 <span class="text-sm font-semibold text-foreground/80 tracking-wide">Sistem Informasi Manajemen Organisasi</span>
             </div>
@@ -231,21 +235,14 @@
                     <span class="font-bold text-primary text-sm">{{ substr(Auth::user()->name, 0, 1) }}</span>
                 </div>
 
-                {{-- Tombol Keluar: ikon di mobile, teks di desktop --}}
-                <form method="POST" action="{{ route('logout') }}">
+                {{-- Tombol Keluar: selalu tampil, ikon + teks --}}
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
                     @csrf
-                    {{-- Desktop: tombol teks + ikon --}}
-                    <button type="submit" class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <button type="submit" class="inline-flex items-center gap-1.5 px-2.5 md:px-4 py-2 rounded-xl text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 hover:text-red-700 transition-all border border-red-100 shadow-sm shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
-                        Keluar
-                    </button>
-                    {{-- Mobile: ikon saja --}}
-                    <button type="submit" title="Keluar" class="md:hidden p-2 rounded-xl text-red-500 bg-red-50 hover:bg-red-100 transition-all border border-red-100 shadow-sm shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                        <span class="hidden sm:inline">Keluar</span>
                     </button>
                 </form>
                 @endauth
