@@ -26,10 +26,13 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Stat Card 1 -->
-        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg relative overflow-hidden">
+        @if(Auth::user()->role !== 'anggota')
+        <a href="{{ route('users.index') }}" class="block group">
+        @endif
+        <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg relative overflow-hidden transition-all duration-300 {{ Auth::user()->role !== 'anggota' ? 'hover:scale-[1.02] hover:shadow-primary/10 cursor-pointer' : '' }}">
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
             <div class="flex items-center justify-between mb-4">
-                <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 {{ Auth::user()->role !== 'anggota' ? 'group-hover:bg-primary group-hover:text-white transition-colors duration-300' : '' }}">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="h-6 w-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
                 @if(Auth::user()->role !== 'anggota')
@@ -37,7 +40,7 @@
                 @endif
             </div>
             <div>
-                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1">
+                <div class="text-sm text-muted-foreground font-semibold uppercase tracking-wider mb-1 {{ Auth::user()->role !== 'anggota' ? 'group-hover:text-primary transition-colors duration-300' : '' }}">
                     {{ Auth::user()->role === 'anggota' ? 'I\'tikaf Diikuti' : 'Total Anggota' }}
                 </div>
                 <div class="text-3xl font-black text-foreground">
@@ -45,6 +48,9 @@
                 </div>
             </div>
         </x-card>
+        @if(Auth::user()->role !== 'anggota')
+        </a>
+        @endif
 
         <!-- Stat Card 2 -->
         <x-card class="backdrop-blur-md bg-card/80 border-primary/10 shadow-lg relative overflow-hidden">

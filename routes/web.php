@@ -48,10 +48,16 @@ Route::middleware(['auth'])->group(function () {
     // Jadwal Saya (untuk anggota)
     Route::get('/jadwal-saya', [\App\Http\Controllers\DashboardController::class, 'jadwalSaya'])->name('jadwal.saya');
 
+    // Daftar Pengguna (akses untuk pengurus_inti dan pengurus_wilayah)
+    Route::get('/users', [\App\Http\Controllers\UserController::class, 'index'])->name('users.index')->middleware('role:pengurus_inti,pengurus_wilayah');
+
     // ============================================================
     // PENGURUS INTI ONLY
     // ============================================================
     Route::middleware('role:pengurus_inti')->group(function () {
+        // Kelola Pengguna (Ubah Role)
+        Route::patch('/users/{user}/role', [\App\Http\Controllers\UserController::class, 'updateRole'])->name('users.update-role');
+
         // Kelola Jadwal I'tikaf
         Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');
         Route::get('/jadwal/create', [JadwalItikafController::class, 'create'])->name('jadwal.create');
