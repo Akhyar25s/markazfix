@@ -88,8 +88,8 @@
                 </div>
                 <!-- Mockup Image / Content -->
                 <div class="aspect-video w-full h-full overflow-hidden bg-gray-900 relative">
-                    <div id="slideshow-container" class="w-full h-full relative">
-                        <img src="{{ asset('images/masjid al ihsan.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100" alt="Masjid Al Ihsan">
+                    <div id="slideshow-container" class="w-full h-full relative" style="min-height: 300px;">
+                        <img src="{{ asset('images/masjid al ihsan.jpg') }}" class="slide-img relative w-full h-full object-cover transition-opacity duration-1000 opacity-100" alt="Masjid Al Ihsan">
                         <img src="{{ asset('images/ceramah.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" alt="Kegiatan Ceramah">
                         <img src="{{ asset('images/dakwah.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" alt="Kegiatan Dakwah">
                         <img src="{{ asset('images/makan.jpg') }}" class="slide-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" alt="Kegiatan Makan Bersama">

@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Auth;
 class TempatIbadahController extends Controller
 {
     /**
+     * Tampilkan daftar tempat ibadah
+     */
+    public function index()
+    {
+        $tempatIbadahs = TempatIbadah::with('mahallah')->orderBy('nama')->get();
+        return view('tempat_ibadah.index', compact('tempatIbadahs'));
+    }
+
+    /**
      * Tampilkan form tambah tempat ibadah baru
      */
     public function create(Request $request)

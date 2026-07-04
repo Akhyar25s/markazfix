@@ -72,6 +72,31 @@ class ExportController extends Controller
             return $this->excelResponse($spreadsheet, 'daftar_anggota.xlsx');
         }
 
+
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment;filename="daftar_anggota.csv"',
+            ];
+
+            $callback = function () use ($anggotas) {
+                $handle = fopen('php://output', 'w');
+                fputcsv($handle, ['No', 'Nama', 'Email', 'Wilayah', 'Status']);
+                foreach ($anggotas as $index => $a) {
+                    fputcsv($handle, [
+                        $index + 1,
+                        $a->name,
+                        $a->email,
+                        $a->wilayah->nama ?? '-',
+                        ucfirst($a->status),
+                    ]);
+                }
+                fclose($handle);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
         abort(404);
     }
 

@@ -11,6 +11,11 @@ class JadwalItikaf extends Model
 
     protected $table = 'jadwal_itikafs';
 
+    protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
+    ];
+
     protected $fillable = [
         'nama_itikaf',
         'tanggal_mulai',
