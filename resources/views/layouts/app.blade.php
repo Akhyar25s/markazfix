@@ -198,7 +198,7 @@
             </button>
 
             {{-- Subtitle: hanya di desktop --}}
-            <div class="hidden lg:flex items-center gap-3 mr-auto">
+            <div class="hidden md:flex items-center gap-4 mr-auto">
                 <div class="h-8 w-1 bg-gradient-to-b from-primary to-secondary rounded-full"></div>
                 <span class="text-sm font-semibold text-foreground/80 tracking-wide">Sistem Informasi Manajemen Organisasi</span>
             </div>
@@ -220,7 +220,7 @@
                 </a>
 
                 {{-- Nama & role: hanya desktop --}}
-                <div class="text-right hidden lg:block">
+                <div class="text-right hidden md:block">
                     <div class="text-sm font-bold text-foreground">{{ Auth::user()->name }}</div>
                     <div class="text-xs font-medium text-secondary capitalize flex items-center gap-1 justify-end">
                         {{ str_replace('_', ' ', Auth::user()->role) }}
