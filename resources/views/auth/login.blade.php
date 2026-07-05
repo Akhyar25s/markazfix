@@ -57,7 +57,8 @@
                 <div class="flex items-center justify-between pl-1 pr-1">
                     <label for="password" class="block text-sm font-bold text-foreground/80">Kata Sandi</label>
                     <a href="{{ route('password.request') }}" class="text-sm font-bold text-primary hover:text-primary/80 transition-colors px-3 py-2 rounded-lg hover:bg-primary/10 -mr-2 touch-manipulation" style="min-height: 44px; display: inline-flex; align-items: center;">
-                        🔑 Lupa sandi?
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                        Lupa sandi?
                     </a>
                 </div>
                 <div class="relative">
