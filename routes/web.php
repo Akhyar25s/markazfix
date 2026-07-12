@@ -55,8 +55,9 @@ Route::middleware(['auth'])->group(function () {
     // PENGURUS INTI ONLY
     // ============================================================
     Route::middleware('role:pengurus_inti')->group(function () {
-        // Kelola Pengguna (Ubah Role)
+        // Kelola Pengguna (Ubah Role & Hapus Akun)
         Route::patch('/users/{user}/role', [\App\Http\Controllers\UserController::class, 'updateRole'])->name('users.update-role');
+        Route::delete('/users/{user}', [\App\Http\Controllers\UserController::class, 'destroy'])->name('users.destroy');
 
         // Kelola Jadwal I'tikaf
         Route::get('/jadwal', [JadwalItikafController::class, 'index'])->name('jadwal.index');

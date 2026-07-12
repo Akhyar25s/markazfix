@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Wilayah;
 use App\Models\Mahallah;
+use App\Models\PendaftaranWajah;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -98,5 +99,33 @@ class UserController extends Controller
         $user->save();
         
         return redirect()->route('users.index')->with('success', "Peran dan Wilayah pengguna {$user->name} berhasil diperbarui.");
+    }
+
+    /**
+     * Menghapus akun pengguna beserta data wajahnya (Hanya Pengurus Inti).
+     */
+    public function destroy(User $user)
+    {
+        $currentUser = Auth::user();
+
+        // Tidak boleh hapus diri sendiri
+        if ($user->id === $currentUser->id) {
+            return back()->with('error', 'Anda tidak dapat menghapus akun Anda sendiri.');
+        }
+
+        // Tidak boleh hapus sesama pengurus inti
+        if ($user->role === 'pengurus_inti') {
+            return back()->with('error', 'Akun Pengurus Inti tidak dapat dihapus melalui halaman ini.');
+        }
+
+        $nama = $user->name;
+
+        // Hapus data wajah terlebih dahulu (jika ada)
+        PendaftaranWajah::where('pengguna_id', $user->id)->delete();
+
+        // Hapus akun pengguna
+        $user->delete();
+
+        return redirect()->route('users.index')->with('success', "Akun pengguna '{$nama}' beserta data wajahnya berhasil dihapus.");
     }
 }

@@ -19,11 +19,11 @@ class PersetujuanLaporanController extends Controller
         $user = Auth::user();
 
         if ($user->role === 'pengurus_wilayah') {
-            // Tampilkan laporan dari jadwal i'tikaf yang ada peserta dari wilayahnya
+            // Tampilkan laporan dari jadwal i'tikaf yang lokasi/mahallah-nya berada di wilayah pengurus tersebut
             // dan status = menunggu_wilayah
             $laporan = LaporanItikaf::with(['jadwal', 'amir'])
                 ->where('status', 'menunggu_wilayah')
-                ->whereHas('jadwal.pesertas.pengguna', function($q) use ($user) {
+                ->whereHas('jadwal.mahallah', function($q) use ($user) {
                     $q->where('wilayah_id', $user->wilayah_id);
                 })
                 ->orderBy('dikirim_pada', 'asc')
@@ -57,8 +57,8 @@ class PersetujuanLaporanController extends Controller
 
         // Validasi akses
         if ($user->role === 'pengurus_wilayah') {
-            // Pengurus wilayah hanya bisa melihat laporan dari wilayahnya sendiri
-            $hasAccess = $laporan->jadwal->pesertas()->whereHas('pengguna', function($q) use ($user) {
+            // Pengurus wilayah hanya bisa melihat laporan dari tempat ibadah/mahallah wilayahnya sendiri
+            $hasAccess = $laporan->jadwal()->whereHas('mahallah', function($q) use ($user) {
                 $q->where('wilayah_id', $user->wilayah_id);
             })->exists();
             

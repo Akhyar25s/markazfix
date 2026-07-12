@@ -17,6 +17,10 @@
         <x-alert type="success" message="{{ session('success') }}" />
     @endif
     
+    @if(session('error'))
+        <div id="session-error-trigger" data-message="{{ session('error') }}" class="hidden"></div>
+    @endif
+    
     @if($errors->any())
         <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm backdrop-blur-md">
             <ul class="list-disc pl-5 space-y-1">
@@ -140,15 +144,27 @@
                         </td>
                         <td class="p-4 align-middle">
                             @if(Auth::user()->role === 'pengurus_inti')
-                                @if($u->status === 'tamu')
-                                    <button disabled class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed" title="Tamu tidak dapat diubah rolenya">
-                                        Ubah Role
-                                    </button>
-                                @else
-                                    <button onclick="openEditModal({{ json_encode($u) }})" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all shadow-sm">
-                                        Ubah Role
-                                    </button>
-                                @endif
+                                <div class="flex items-center gap-2">
+                                    @if($u->status === 'tamu')
+                                        <button disabled class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed" title="Tamu tidak dapat diubah rolenya">
+                                            Ubah Role
+                                        </button>
+                                    @else
+                                        <button onclick="openEditModal({{ json_encode($u) }})" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all shadow-sm">
+                                            Ubah Role
+                                        </button>
+                                    @endif
+
+                                    {{-- Tombol Hapus: tidak muncul untuk diri sendiri atau sesama pengurus_inti --}}
+                                    @if($u->id !== Auth::id() && $u->role !== 'pengurus_inti')
+                                        <button
+                                            onclick="openDeleteModal({{ $u->id }}, '{{ addslashes($u->name) }}')"
+                                            class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-500/10 text-red-600 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                            title="Hapus akun pengguna ini">
+                                            Hapus
+                                        </button>
+                                    @endif
+                                </div>
                             @else
                                 <span class="text-xs text-muted-foreground/60 italic">Read-only</span>
                             @endif
@@ -252,6 +268,73 @@
     </div>
 </div>
 
+{{-- ============================================================ --}}
+{{-- MODAL KONFIRMASI HAPUS AKUN --}}
+{{-- ============================================================ --}}
+<div id="delete-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
+
+        <div id="delete-modal-card" class="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md p-8 flex flex-col items-center text-center transform scale-90 opacity-0 transition-all duration-300 z-50">
+            {{-- Icon Peringatan --}}
+            <div class="w-20 h-20 rounded-full bg-red-500/15 border-2 border-red-500/30 flex items-center justify-center mb-5">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-10 h-10 text-red-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </div>
+
+            <h3 class="text-xl font-black text-foreground mb-1">Hapus Akun Pengguna</h3>
+            <p class="text-sm text-muted-foreground mb-2">Anda akan menghapus akun:</p>
+            <p id="delete-user-name" class="font-bold text-red-600 text-base mb-4"></p>
+
+            <div class="w-full bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-6 text-left">
+                <p class="text-xs text-red-600 font-semibold mb-1">⚠️ Tindakan ini tidak dapat dibatalkan!</p>
+                <ul class="text-xs text-red-500/80 space-y-0.5 pl-3 list-disc">
+                    <li>Akun pengguna akan dihapus permanen</li>
+                    <li>Data wajah (enrollment) akan ikut terhapus</li>
+                    <li>Riwayat absensi tetap tersimpan</li>
+                </ul>
+            </div>
+
+            <form id="delete-form" method="POST" action="" class="w-full">
+                @csrf
+                @method('DELETE')
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="flex-1 py-3 px-4 font-bold rounded-xl border border-border text-foreground hover:bg-muted transition-all">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-3 px-4 font-bold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg shadow-red-500/30">
+                        Ya, Hapus Akun
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- POPUP ERROR SESSION (mis. hapus diri sendiri / pengurus inti) --}}
+{{-- ============================================================ --}}
+<div id="error-modal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeErrorModal()"></div>
+        <div id="error-modal-card" class="relative bg-card border border-border rounded-3xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center text-center transform scale-90 opacity-0 transition-all duration-300 z-50">
+            <div class="w-20 h-20 rounded-full bg-red-500/15 border-2 border-red-500/30 flex items-center justify-center mb-5">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-10 h-10 text-red-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-black text-red-600 mb-2">Aksi Tidak Diizinkan</h3>
+            <p id="error-modal-msg" class="text-sm text-muted-foreground leading-relaxed mb-6"></p>
+            <button onclick="closeErrorModal()" class="w-full py-3 px-6 font-bold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg shadow-red-500/30">
+                Mengerti
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     function openEditModal(user) {
         const modal = document.getElementById('edit-modal');
@@ -327,5 +410,72 @@
             }
         }
     }
+</script>
+
+<script>
+    // ── Delete Modal ───────────────────────────────────────────────
+    function openDeleteModal(userId, userName) {
+        const modal    = document.getElementById('delete-modal');
+        const card     = document.getElementById('delete-modal-card');
+        const nameEl   = document.getElementById('delete-user-name');
+        const form     = document.getElementById('delete-form');
+
+        nameEl.textContent = userName;
+        form.action = `/users/${userId}`;
+
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                card.classList.remove('scale-90', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            });
+        });
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('delete-modal');
+        const card  = document.getElementById('delete-modal-card');
+        card.classList.remove('scale-100', 'opacity-100');
+        card.classList.add('scale-90', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 250);
+    }
+
+    // ── Error Modal (untuk session error dari server) ──────────────
+    function openErrorModal(msg) {
+        const modal = document.getElementById('error-modal');
+        const card  = document.getElementById('error-modal-card');
+        document.getElementById('error-modal-msg').textContent = msg;
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                card.classList.remove('scale-90', 'opacity-0');
+                card.classList.add('scale-100', 'opacity-100');
+            });
+        });
+    }
+
+    function closeErrorModal() {
+        const modal = document.getElementById('error-modal');
+        const card  = document.getElementById('error-modal-card');
+        card.classList.remove('scale-100', 'opacity-100');
+        card.classList.add('scale-90', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 250);
+    }
+
+    // ── Auto-trigger session error modal ─────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        const trigger = document.getElementById('session-error-trigger');
+        if (trigger) {
+            openErrorModal(trigger.dataset.message);
+        }
+    });
+
+    // ── Close on Escape ───────────────────────────────────────────
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+            closeErrorModal();
+        }
+    });
 </script>
 @endsection
