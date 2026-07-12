@@ -105,11 +105,11 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <x-label for="latitude" class="text-xs">Latitude</x-label>
-                        <x-input id="latitude" name="latitude" type="text" value="{{ old('latitude', $tempatIbadah->latitude) }}" readonly class="bg-muted text-xs h-8" required />
+                        <x-input id="latitude" name="latitude" type="text" value="{{ old('latitude', $tempatIbadah->latitude) }}" class="text-xs h-8" required />
                     </div>
                     <div class="space-y-1">
                         <x-label for="longitude" class="text-xs">Longitude</x-label>
-                        <x-input id="longitude" name="longitude" type="text" value="{{ old('longitude', $tempatIbadah->longitude) }}" readonly class="bg-muted text-xs h-8" required />
+                        <x-input id="longitude" name="longitude" type="text" value="{{ old('longitude', $tempatIbadah->longitude) }}" class="text-xs h-8" required />
                     </div>
                 </div>
             </div>
@@ -143,7 +143,7 @@
 
         updateMap(initialLat, initialLng);
 
-        function updateMap(lat, lng) {
+        function updateMap(lat, lng, centerMap = true) {
             if (marker) {
                 marker.setLatLng([lat, lng]);
             } else {
@@ -160,8 +160,9 @@
             }
 
             updateCircle(lat, lng);
-            map.setView([lat, lng], map.getZoom() < 16 ? 16 : map.getZoom());
-            updateInputs(lat, lng);
+            if (centerMap) {
+                map.setView([lat, lng], map.getZoom() < 16 ? 16 : map.getZoom());
+            }
         }
 
         function updateCircle(lat, lng) {
@@ -179,6 +180,19 @@
             document.getElementById('longitude').value = lng.toFixed(8);
         }
 
+        // Listen for manual coordinate inputs
+        function handleManualInput() {
+            const latVal = parseFloat(document.getElementById('latitude').value);
+            const lngVal = parseFloat(document.getElementById('longitude').value);
+
+            if (!isNaN(latVal) && !isNaN(lngVal)) {
+                updateMap(latVal, lngVal, true);
+            }
+        }
+
+        document.getElementById('latitude').addEventListener('input', handleManualInput);
+        document.getElementById('longitude').addEventListener('input', handleManualInput);
+
         // Listen for mahallah selection to center map
         document.getElementById('mahallah_id').addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
@@ -187,21 +201,23 @@
 
             if (lat && lng) {
                 updateMap(parseFloat(lat), parseFloat(lng));
+                updateInputs(parseFloat(lat), parseFloat(lng));
             }
         });
 
         // Listen for radius changes
         document.getElementById('radius_meter').addEventListener('input', function() {
-            const lat = document.getElementById('latitude').value;
-            const lng = document.getElementById('longitude').value;
-            if (lat && lng) {
-                updateCircle(parseFloat(lat), parseFloat(lng));
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                updateCircle(lat, lng);
             }
         });
 
         // Map Click
         map.on('click', function(e) {
             updateMap(e.latlng.lat, e.latlng.lng);
+            updateInputs(e.latlng.lat, e.latlng.lng);
         });
 
         // Add Geocoder
@@ -212,6 +228,7 @@
         .on('markgeocode', function(e) {
             const latlng = e.geocode.center;
             updateMap(latlng.lat, latlng.lng);
+            updateInputs(latlng.lat, latlng.lng);
         })
         .addTo(map);
     });
